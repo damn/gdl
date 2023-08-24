@@ -54,7 +54,7 @@
   (assert (apply distinct? (map first modules)))
   (->> (for [[k v] modules]
          (do
-          (println "Create > " k)
+          ;(println "Create > " k)
           (let [ns-sym (-> k name symbol)]
             (or (find-ns ns-sym)
                 (require ns-sym))

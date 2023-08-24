@@ -46,8 +46,6 @@ export JVM_OPTS=-XstartOnFirstThread
 The command `lein dev` starts a __dev-loop__.
 When closing the app window all namespaces will be reloaded with `clojure.tools.namespace.repl/refresh-all`.
 
-All variables using `app/defmanaged` are managing their lifecycle with the app lifecycle.
-
 There is also a function `gdl.dev-loop/restart!` in case of errors on app-start or refresh, so there is no need to restart the JVM.
 
 You can bind this on a key , here in VIM :
