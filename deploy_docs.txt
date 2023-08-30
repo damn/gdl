@@ -1,5 +1,6 @@
 git checkout gh-pages
 git merge main
+git commit -m 'Merge main'
 
 lein codox
 
