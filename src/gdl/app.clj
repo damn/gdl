@@ -1,20 +1,25 @@
 (ns gdl.app
   (:require [x.x :refer [update-map]]
             [gdl.lc :as lc]
-            [gdl.gdx :as gdx :refer [app]]
             [gdl.graphics :as g]
+            [gdl.files :as files]
+            [gdl.graphics.batch :refer [sprite-batch]]
             [gdl.graphics.color :as color]
             [gdl.graphics.gui :as gui]
             [gdl.graphics.world :as world]
+            [gdl.scene2d.ui :as ui]
             [gdl.backends.lwjgl3 :as lwjgl3])
-  (:import com.badlogic.gdx.ApplicationAdapter
+  (:import (com.badlogic.gdx Gdx Application ApplicationAdapter)
            com.badlogic.gdx.utils.ScreenUtils))
 
+(defn app ^Application []
+  Gdx/app)
+
 (defn exit []
-  (.exit app))
+  (.exit (app)))
 
 (defmacro with-context [& exprs]
-  `(.postRunnable app (fn [] ~@exprs)))
+  `(.postRunnable (app) (fn [] ~@exprs)))
 
 (defn- on-resize [w h]
   (let [center-camera? true]
@@ -29,8 +34,7 @@
     (on-resize (g/screen-width) (g/screen-height))))
 
 (defn- default-modules [{:keys [tile-size]}]
-  [[:gdl.gdx]
-   [:gdl.assets {:folder "resources/" ; TODO these are classpath settings ?
+  [[:gdl.assets {:folder "resources/" ; TODO these are classpath settings ?
                  :sounds-folder "sounds/"
                  :sound-files-extensions #{"wav"}
                  :image-files-extensions #{"png" "bmp"}
@@ -38,16 +42,19 @@
    [:gdl.graphics.gui]
    [:gdl.graphics.world (or tile-size 1)]
    [:gdl.graphics.font]
-   [:gdl.graphics.batch]
-   [:gdl.graphics.shape-drawer]  ; after :gdl.graphics.batch
-   [:gdl.ui]])
+   [:gdl.graphics.batch (sprite-batch)]
+   [:gdl.graphics.shape-drawer]  ; requires batch
+   ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
+   [:gdl.scene2d.ui (ui/skin (files/internal "scene2d.ui.skin/uiskin.json"))]])
 
 (def state (atom nil))
-(def current-screen (atom nil))
 
-(defn- current-screen-component [] ;
-  (let [component-k @current-screen]
-    [component-k (get @state component-k)]))
+(defn- current-screen-component []
+  (let [k (::current-screen @state)]
+    [k (k @state)]))
+
+(defn current-screen-value []
+  ((::current-screen @state) @state))
 
 (defn- create-state [modules]
   ; turn state into a map after create, because order is important!
@@ -63,28 +70,28 @@
        (into {})))
 
 (defn set-screen [k]
-  (lc/hide (current-screen-component))
-  (reset! current-screen k)
+  (assert (contains? @state k) (str "Cannot find screen with key: " k " in state."))
+  (when (::current-screen @state)
+    (lc/hide (current-screen-component)))
+  (swap! state assoc ::current-screen k)
   (lc/show (current-screen-component)))
 
-(defn- ->Game [{:keys [log-lc? modules first-screen] :as config}]
-  (let [modules (concat (default-modules config)
-                        modules)]
-    (when log-lc? (clojure.pprint/pprint modules))
-    (proxy [ApplicationAdapter] []
-      (create  []
-        (reset! state (create-state modules))
-        (set-screen first-screen))
-      (dispose []
-        (swap! state update-map lc/dispose))
-      (render []
-        (ScreenUtils/clear color/black)
-        (fix-viewport-update)
-        (lc/render (current-screen-component))
-        (lc/tick (current-screen-component)
-                 (* (.getDeltaTime gdx/graphics) 1000)))
-      (resize [w h]
-        (on-resize w h)))))
+(defn- application-adapter [{:keys [log-lc? modules first-screen] :as config}]
+  (proxy [ApplicationAdapter] []
+    (create  []
+      (reset! state (create-state (concat (default-modules config)
+                                          modules)))
+      (set-screen first-screen))
+    (dispose []
+      (swap! state update-map lc/dispose))
+    (render []
+      (ScreenUtils/clear color/black)
+      (fix-viewport-update)
+      (lc/render (current-screen-component))
+      (lc/tick (current-screen-component)
+               (* (g/delta-time) 1000)))
+    (resize [w h]
+      (on-resize w h))))
 
 (comment
 
@@ -98,5 +105,5 @@
 
 
 (defn start [{:keys [window] :as config}]
-  (lwjgl3/create-app (->Game config)
+  (lwjgl3/create-app (application-adapter config)
                      window))

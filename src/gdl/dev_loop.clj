@@ -43,10 +43,10 @@
   (loop []
     (when-not @app-start-failed
       (do
-       (println "refresh-all")
-       (def refresh-result (refresh-all :after 'gdl.dev-loop/dev-loop))
+       (println "refresh")
+       (def refresh-result (refresh :after 'gdl.dev-loop/dev-loop))
        (p/pretty-pst refresh-result)
-       (println "error on refresh-all")))
+       (println "error on refresh")))
     (wait!)
     (recur)))
 

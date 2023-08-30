@@ -1,18 +1,15 @@
 (ns gdl.graphics.batch
   (:require [x.x :refer [defmodule]]
             [gdl.lc :as lc])
-  (:import com.badlogic.gdx.graphics.g2d.SpriteBatch))
+  (:import (com.badlogic.gdx.graphics.g2d Batch SpriteBatch)))
 
-(declare ^SpriteBatch batch) ; => in graphics ? *batch* ??
-; binds a batch and start/end
+(declare ^Batch batch)
 
-(defmodule _
+(defmodule user-batch
   (lc/create [_]
-    (.bindRoot #'batch (SpriteBatch.)))
+    (.bindRoot #'batch user-batch))
   (lc/dispose [_]
     (.dispose batch)))
 
-; *batch*
-; *shape-drawer*
-; but its not thread local
-; its 1 object for the whole lifecycle.
+(defn sprite-batch []
+  (SpriteBatch.))

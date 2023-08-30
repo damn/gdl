@@ -1,10 +1,13 @@
 (ns gdl.files
-  (:require [clojure.string :as str]
-            [gdl.gdx :refer [files]])
-  (:import com.badlogic.gdx.files.FileHandle))
+  (:require [clojure.string :as str])
+  (:import (com.badlogic.gdx Gdx Files)
+           com.badlogic.gdx.files.FileHandle))
+
+(defn files ^Files []
+  Gdx/files)
 
 (defn internal ^FileHandle [file]
-  (.internal files file))
+  (.internal (files) file))
 
 (defn ^:no-doc recursively-search-files [folder extensions]
   (loop [[^FileHandle file & remaining] (.list (internal folder))

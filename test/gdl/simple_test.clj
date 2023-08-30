@@ -26,7 +26,6 @@
                      :text (str "exl-font\n" the-str)
                      :x gx,:y gy,:h-align :left,:up? false})))
 
-; also : font as sub-component ??? 'media' ?
 (defmodule
   font
   (lc/create [_] (gen-font))
