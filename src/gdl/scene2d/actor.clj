@@ -30,3 +30,10 @@
   (-> actor
       (set-id id))
   actor)
+
+(defn create [& {:keys [act draw]}]
+  (proxy [Actor] []
+    (act [delta]
+      (when act (act delta)))
+    (draw [_batch _parent-alpha]
+      (when draw (draw)))))
