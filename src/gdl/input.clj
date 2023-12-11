@@ -1,24 +1,17 @@
-; remove all 'is-...?' -> just add '?' at end of fn name -> grep
-; vimgrep/is-.*-down?\|is-.*-pressed?/g src/**
 (ns gdl.input
-  (:import (com.badlogic.gdx Gdx Input Input$Buttons Input$Keys)))
-
-(defn input ^Input []
-  Gdx/input)
-
-; TODO use set-input-processor (its the class name)
-(defn set-processor [processor]
-  (.setInputProcessor (input) processor))
+  (:import (com.badlogic.gdx Gdx Input$Buttons Input$Keys)))
 
 (defn- to-mouse-key [k]
   (case k
     :left  Input$Buttons/LEFT
     :right Input$Buttons/RIGHT))
 
-(defn- is-mouse-button-down? [k] (.isButtonPressed    (input) (to-mouse-key k)))
+(defn- is-mouse-button-down? [k]
+  (.isButtonPressed Gdx/input (to-mouse-key k)))
 
 ; returns true no matter how many times called in 1 frame (non-consuming)
-(defn- is-mouse-pressed?     [k] (.isButtonJustPressed (input) (to-mouse-key k)))
+(defn- is-mouse-pressed? [k]
+  (.isButtonJustPressed Gdx/input (to-mouse-key k)))
 
 (def is-leftbutton-down?  (partial is-mouse-button-down? :left))
 (def is-leftm-pressed?    (partial is-mouse-pressed?     :left))
@@ -42,7 +35,7 @@
   ; TODO check if this docstring is still true.
   "Since last call to this. So do not call this twice in one frame else it will return false."
   [k]
-  (.isKeyJustPressed (input) (to-keyboard-key k)))
+  (.isKeyJustPressed Gdx/input (to-keyboard-key k)))
 
 (defn is-key-down? [k]
-  (.isKeyPressed (input) (to-keyboard-key k)))
+  (.isKeyPressed Gdx/input (to-keyboard-key k)))

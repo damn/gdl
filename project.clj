@@ -15,7 +15,7 @@
                  [com.badlogicgames.gdx/gdx-freetype-platform     ~libgdx-version :classifier "natives-desktop"]
                  [com.kotcrab.vis/vis-ui "1.5.2"]
                  [space.earlygrey/shapedrawer "2.5.0"]
-                 [com.github.damn/x.x "ae5856d"]]
+                 [com.github.damn/x.x "f9cce0d"]]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"] ; TODO why ? libgdx ?
   :java-source-paths ["src-java"]
   :profiles {:dev {:resource-paths ["test/resources"]}}

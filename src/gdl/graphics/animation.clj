@@ -1,46 +1,32 @@
-; Main point : ! its an immutable animation, I can create once pass to hundred entities
-; and they all update it itself.
-(ns gdl.graphics.animation
-  (:refer-clojure :exclude [update])
-  (:require [gdl.graphics.image :as image]))
+(ns gdl.graphics.animation)
 
 (defprotocol Animation
-  (stopped?     [_])
-  (restart      [_])
-  (get-duration [_])
-  (get-frame    [_]))
+  (tick [_ delta])
+  (restart [_])
+  (stopped? [_])
+  (current-frame [_]))
 
-(defrecord ImmutableAnimation [frames frame-duration looping speed cnt maxcnt]
+(defrecord ImmutableAnimation [frames frame-duration looping? cnt maxcnt]
   Animation
-  (stopped? [_]
-    (and (not looping) (= cnt maxcnt)))
+  (tick [this delta]
+    (let [newcnt (+ cnt delta)]
+      (assoc this :cnt (cond (< newcnt maxcnt) newcnt
+                             looping? (min maxcnt (- newcnt maxcnt))
+                             :else maxcnt))))
   (restart [this]
     (assoc this :cnt 0))
-  (get-duration [_]
-    maxcnt)
-  (get-frame [this]
-    ; int because cnt can be a float value
-    (get frames (int (quot (dec cnt) frame-duration)))))
-
-(defn update [{:keys [cnt speed maxcnt looping] :as this} delta]
-  (let [newcnt (+ cnt (* speed delta))]
-    (assoc this :cnt (cond (< newcnt maxcnt) newcnt
-                           looping           (min maxcnt (- newcnt maxcnt))
-                           :else             maxcnt))))
-
-(def ^:private default-frame-duration 33)
+  (stopped? [_]
+    (and (not looping?) (= cnt maxcnt)))
+  (current-frame [this]
+    ; dec because otherwise (quot frame-duration frame-duration) = 1, so we get the next frame
+    ; which leads to java.lang.IndexOutOfBoundsException
+    (-> cnt dec (quot frame-duration) int frames)))
 
 (defn create
-  [frames & {:keys [frame-duration looping]
-             :or {frame-duration default-frame-duration}}]
+  [frames & {:keys [frame-duration looping?]}]
   (map->ImmutableAnimation
     {:frames (vec frames)
      :frame-duration frame-duration
-     :looping looping
-     :speed 1
+     :looping? looping?
      :cnt 0
      :maxcnt (* (count frames) frame-duration)}))
-
-; TODO just get-frame and render image there.... only used @ glittering
-(defn draw-centered [animation position]
-  (image/draw-centered (get-frame animation) position))

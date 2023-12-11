@@ -1,31 +1,26 @@
 (ns gdl.graphics.world
   (:require [x.x :refer [defmodule]]
             [gdl.lc :as lc]
-            [gdl.graphics :as g]
             [gdl.graphics.viewport :as viewport]
             gdl.render)
-  (:import com.badlogic.gdx.graphics.OrthographicCamera
+  (:import com.badlogic.gdx.Gdx
+           com.badlogic.gdx.graphics.OrthographicCamera
            [com.badlogic.gdx.utils.viewport Viewport FitViewport]
            com.badlogic.gdx.math.Vector3))
 
 (declare unit-scale)
 
-(defn pixels->world-units [px] ; TODO world/pixels->units
+(defn pixels->world-units [px]
   (* px unit-scale))
 
 (declare ^OrthographicCamera camera
          ^Viewport viewport)
 
-(defmodule tile-size
-  (lc/create [_]
-    (assert tile-size "Not given world tile-size config.")
-    (.bindRoot #'unit-scale (/ tile-size))
-    (.bindRoot #'camera (OrthographicCamera.))
-    (.bindRoot #'viewport (let [width  (* (g/screen-width)  unit-scale)
-                                height (* (g/screen-height) unit-scale)
-                                y-down? false]
-                            (.setToOrtho camera y-down? width height)
-                            (FitViewport. width height camera)))))
+(defmodule {:keys [world-unit-scale world-camera world-viewport]}
+  (lc/create [_ _ctx]
+    (.bindRoot #'unit-scale world-unit-scale)
+    (.bindRoot #'camera world-camera)
+    (.bindRoot #'viewport world-viewport)))
 
 ; TODO clamping only works for gui-viewport ? check. comment if true
 (defn mouse-position
@@ -67,5 +62,5 @@
            y (range (int bottom-y) (+ 2 (int top-y)))]
       [x y])))
 
-(defn render [renderfn]
-  (gdl.render/render-with unit-scale camera renderfn))
+(defn render [batch renderfn]
+  (gdl.render/render-with batch unit-scale camera renderfn))

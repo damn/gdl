@@ -11,15 +11,21 @@
             Button$ButtonStyle ImageButton ImageButton$ImageButtonStyle Label TooltipManager Tooltip
             TextTooltip TextField SplitPane Stack Image)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
-           (com.kotcrab.vis.ui.widget VisTextField VisTable VisTextButton VisWindow VisLabel VisSplitPane VisCheckBox)))
+           (com.kotcrab.vis.ui.widget VisTextField VisTable VisTextButton VisImageButton VisWindow VisLabel VisSplitPane VisCheckBox)))
+
+; TODO use VisToolTip -> remove default-skin
 
 (declare ^Skin default-skin)
 
 (defmodule user-skin
-  (lc/create [_]
+  (lc/create [_ _ctx]
     (.bindRoot #'default-skin user-skin)
-    (when-not (VisUI/isLoaded) ; app has error before VisUI/dispose and we call refresh-all
-      (VisUI/load #_VisUI$SkinScale/X2)))
+    ; app crashes during startup before VisUI/dispose and we do clojure.tools.namespace.refresh-> gui elements not showing.
+    ; => actually there is a deeper issue at play
+    ; we need to dispose ALL resources which were loaded already ...
+    (when (VisUI/isLoaded)
+      (VisUI/dispose))
+    (VisUI/load #_VisUI$SkinScale/X2))
   (lc/dispose [_]
     (.dispose default-skin)
     (VisUI/dispose)))
@@ -101,37 +107,36 @@
                       (on-clicked (.isChecked actor)))))
     button))
 
-; TODO 'toggle' - imagebutton , :toggle true ?
-(defn image-button ^ImageButton [{:keys [^TextureRegion texture] :as image} on-clicked]
-  (let [style (ImageButton$ImageButtonStyle. ^Button$ButtonStyle (.get default-skin "toggle" Button$ButtonStyle))
-        _ (set! (.imageUp   style) (TextureRegionDrawable. texture))
-        _ (set! (.imageDown style) (TextureRegionDrawable. texture))
-        ; imageChecked
-        ; imageCheckedDown
-       ; imageCheckedOver
-        ; imageDisabled
-        ; imageDown
-        ; imageOver
-        ; imageUp
-        button (ImageButton. style)]
+; TODO give directly texture-region
+; TODO check how to make toggle-able ? with hotkeys for actionbar trigger ?
+(defn image-button ^ImageButton [image on-clicked]
+  (let [button (VisImageButton. (TextureRegionDrawable. ^TextureRegion (:texture image)))]
     (.addListener button
                   (proxy [ChangeListener] []
                     (changed [event actor]
                       (on-clicked))))
     button))
 
-; https://stackoverflow.com/questions/29771114/how-can-i-add-button-to-top-right-corner-of-a-dialog-in-libgdx
-; window with close button
+(defn- add-window-close-button [^Window window]
+  (.add (.getTitleTable window)
+        (text-button "x" #(.setVisible window false)))
+  window)
+
 (defn window ^Window [& {:keys [title modal?] :as opts}]
   (-> (doto (VisWindow. ^String title)
         (.setModal (boolean modal?)))
-      (set-opts opts)))
+      (set-opts opts)
+      add-window-close-button))
 
 (defn label ^Label [text]
   (VisLabel. ^CharSequence text))
 
-(defn text-field ^VisTextField [^String text]
-  (VisTextField. text))
+(defn set-text [^Label label ^CharSequence text]
+  (.setText label text))
+
+(defn text-field ^VisTextField [^String text & opts]
+  (-> (VisTextField. text)
+      (set-opts opts)))
 
 ; TODO the tooltip manager sets my spritebatch color to 0.2 alpha for short time
 ; TODO also the widget where the tooltip is attached is flickering after
@@ -151,17 +156,24 @@
     manager))
 
 ; TODO VisToolTip
+; https://github.com/kotcrab/vis-ui/wiki/Tooltips
 (defn text-tooltip ^TextTooltip [textfn]
   (TextTooltip. "" (instant-show-tooltip-manager textfn) default-skin))
 
-(defn split-pane ^SplitPane [& {:keys [^Actor first-widget
-                                       ^Actor second-widget
-                                       ^Boolean vertical?] :as opts}]
+; TODO is not decendend of SplitPane anymore => check all type hints here
+
+(defn split-pane ^VisSplitPane [& {:keys [^Actor first-widget
+                                          ^Actor second-widget
+                                          ^Boolean vertical?] :as opts}]
   (-> (VisSplitPane. first-widget second-widget vertical?)
       (actor/set-opts opts)))
 
 (defn stack ^Stack []
   (Stack.))
 
-(defn image ^Image [{:keys [texture]}]
-  (Image. (TextureRegionDrawable. ^TextureRegion texture)))
+(defn image ^Image [^Drawable drawable & opts]
+  (-> (Image. drawable)
+      (set-opts opts)))
+
+(defn texture-region-drawable ^TextureRegionDrawable [^TextureRegion texture]
+  (TextureRegionDrawable. texture))

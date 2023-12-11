@@ -1,4 +1,3 @@
-; => into gdl.backends.lwjgl3
 (ns ^:no-doc gdl.mac-dock-icon
   (:require [clojure.java.io :as io])
   (:import javax.imageio.ImageIO))

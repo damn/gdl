@@ -1,7 +1,5 @@
 (ns gdl.tiled
-  (:require [gdl.graphics :as g]
-            [gdl.graphics.batch :refer [batch]]
-            [gdl.graphics.world :as world])
+  (:require [gdl.graphics.world :as world])
   (:import [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
            [com.badlogic.gdx.maps.tiled TmxMapLoader TiledMap TiledMapTile
             TiledMapTileLayer TiledMapTileLayer$Cell]
@@ -13,7 +11,7 @@
   [file]
   (.load (TmxMapLoader.) file))
 
-(defn dispose [^TiledMap tiled-map] ; TODO use gdl.utils/dispose ? or better tmx map asset loader.
+(defn dispose [^TiledMap tiled-map]
   (.dispose tiled-map))
 
 ; TODO this is actually get-properties for no reflection
@@ -101,7 +99,7 @@
 ; OrthogonalTiledMapRenderer extends BatchTiledMapRenderer
 ; and when a batch is passed to the constructor
 ; we do not need to dispose the renderer
-(defn- map-renderer-for [tiled-map color-setter]
+(defn- map-renderer-for [batch tiled-map color-setter]
   (OrthogonalTiledMapRendererWithColorSetter. tiled-map
                                               (float world/unit-scale)
                                               batch
@@ -111,8 +109,8 @@
 
 (def ^:private cached-map-renderer (memoize map-renderer-for))
 
-(defn render-map [tiled-map color-setter]
-  (let [^MapRenderer map-renderer (cached-map-renderer tiled-map color-setter)]
+(defn render-map [batch tiled-map color-setter]
+  (let [^MapRenderer map-renderer (cached-map-renderer batch tiled-map color-setter)]
     (world/update-camera-position)
     (.setView map-renderer world/camera)
     (->> tiled-map
