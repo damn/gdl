@@ -1,6 +1,6 @@
 (ns gdl.tiled
-  (:require [gdl.graphics.world :as world])
-  (:import [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
+  (:import com.badlogic.gdx.graphics.OrthographicCamera
+           [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
            [com.badlogic.gdx.maps.tiled TmxMapLoader TiledMap TiledMapTile
             TiledMapTileLayer TiledMapTileLayer$Cell]
            ; TODO move java sources & packages in tiled/...
@@ -99,9 +99,11 @@
 ; OrthogonalTiledMapRenderer extends BatchTiledMapRenderer
 ; and when a batch is passed to the constructor
 ; we do not need to dispose the renderer
-(defn- map-renderer-for [batch tiled-map color-setter]
+(defn- map-renderer-for [{:keys [batch world-unit-scale]}
+                         tiled-map
+                         color-setter]
   (OrthogonalTiledMapRendererWithColorSetter. tiled-map
-                                              (float world/unit-scale)
+                                              (float world-unit-scale)
                                               batch
                                               (reify ColorSetter
                                                 (apply [_ color x y]
@@ -109,10 +111,10 @@
 
 (def ^:private cached-map-renderer (memoize map-renderer-for))
 
-(defn render-map [batch tiled-map color-setter]
-  (let [^MapRenderer map-renderer (cached-map-renderer batch tiled-map color-setter)]
-    (world/update-camera-position)
-    (.setView map-renderer world/camera)
+(defn render-map [{:keys [world-camera] :as context} tiled-map color-setter]
+  (let [^MapRenderer map-renderer (cached-map-renderer context tiled-map color-setter)]
+    (.update ^OrthographicCamera world-camera)
+    (.setView map-renderer world-camera)
     (->> tiled-map
          layers
          (filter #(.isVisible ^MapLayer %))

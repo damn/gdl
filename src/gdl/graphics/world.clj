@@ -1,10 +1,8 @@
 (ns gdl.graphics.world
   (:require [x.x :refer [defmodule]]
             [gdl.lc :as lc]
-            [gdl.graphics.viewport :as viewport]
-            gdl.render)
-  (:import com.badlogic.gdx.Gdx
-           com.badlogic.gdx.graphics.OrthographicCamera
+            [gdl.graphics.viewport :as viewport])
+  (:import com.badlogic.gdx.graphics.OrthographicCamera
            [com.badlogic.gdx.utils.viewport Viewport FitViewport]
            com.badlogic.gdx.math.Vector3))
 
@@ -31,19 +29,13 @@
 (defn viewport-width  [] (.getWorldWidth  viewport))
 (defn viewport-height [] (.getWorldHeight viewport))
 
-(def ^:private cam-posi (atom nil))
+(defn camera-position []
+  [(.x (.position camera))
+   (.y (.position camera))])
 
-(defn camera-position [] @cam-posi)
-
-(defn set-camera-position! [position]
-  (reset! cam-posi position))
-
-; TODO why not camera directly?? test...
-; because during render loop ?? it changes it again?
-(defn update-camera-position []
-  (set! (.x (.position camera)) (@cam-posi 0))
-  (set! (.y (.position camera)) (@cam-posi 1))
-  (.update camera))
+(defn set-camera-position! [[x y]]
+  (set! (.x (.position camera)) (float x))
+  (set! (.y (.position camera)) (float y)))
 
 (defn camera-frustum []
   (let [frustum-points (for [^Vector3 point (take 4 (.planePoints (.frustum camera)))
@@ -61,6 +53,3 @@
     (for  [x (range (int left-x)   (int right-x))
            y (range (int bottom-y) (+ 2 (int top-y)))]
       [x y])))
-
-(defn render [batch renderfn]
-  (gdl.render/render-with batch unit-scale camera renderfn))

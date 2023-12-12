@@ -1,5 +1,4 @@
 (ns gdl.graphics.image
-  (:require [gdl.graphics.world :as world])
   (:import (com.badlogic.gdx.graphics Color Texture)
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
 
@@ -34,11 +33,11 @@
          rotation)
   (if color (.setColor batch Color/WHITE)))
 
-(defn- unit-dimensions [{:keys [unit-scale world-unit-scale gui-unit-scale] :as context} image]
+(defn- unit-dimensions [{:keys [unit-scale world-unit-scale] :as context} image]
   {:pre [(number? unit-scale)]}
   (cond
    (= unit-scale world-unit-scale) (:world-unit-dimensions image)
-   (= unit-scale gui-unit-scale) (:pixel-dimensions image)))
+   (= unit-scale 1) (:pixel-dimensions image)))
 
 (defn draw
   ([{:keys [batch] :as context} {:keys [texture color] :as image} position]
@@ -67,19 +66,18 @@
 (def pixel-dimensions :pixel-dimensions)
 (def world-unit-dimensions :world-unit-dimensions)
 
-(defn- assoc-dimensions [{:keys [texture scale] :as image}]
-  {:pre [(or (number? scale)
+(defn- assoc-dimensions [{:keys [texture scale] :as image} world-unit-scale]
+  {:pre [(number? world-unit-scale)
+         (or (number? scale)
              (and (vector? scale)
                   (number? (scale 0))
                   (number? (scale 1))))]}
-  ; TODO here implicit assumption gui-unit-scale = 1 ...
-  ; nope ! pixel-unit-scale is 1 !!!
   (let [pixel-dimensions (if (number? scale)
                            (mapv (partial * scale) (texture-dimensions texture))
                            scale)]
     (assoc image
            :pixel-dimensions pixel-dimensions
-           :world-unit-dimensions (mapv (partial * world/unit-scale) pixel-dimensions))))
+           :world-unit-dimensions (mapv (partial * world-unit-scale) pixel-dimensions))))
 
 ; (.getTextureData (.getTexture (:texture (first (:frames (:animation @(game.db/get-entity 1)))))))
 ; can remove :file @ Image because its in texture-data
@@ -101,29 +99,29 @@
 
 (defn create
   "Scale can be a number or [width height]"
-  [assets file & {:keys [scale]}]
-  (assoc-dimensions
-   (map->Image {:file file
-                :scale (or scale 1)
-                :texture (get-texture-region assets file)})))
+  [{:keys [assets world-unit-scale]} file & {:keys [scale]}]
+  (assoc-dimensions (map->Image {:file file
+                                 :scale (or scale 1)
+                                 :texture (get-texture-region assets file)})
+                    world-unit-scale))
 
 (defn get-scaled-copy
   "Scaled of original texture-dimensions, not any existing scale."
-  [image scale]
-  (assoc-dimensions
-   (assoc image :scale scale)))
+  [{:keys [world-unit-scale]} image scale]
+  (assoc-dimensions (assoc image :scale scale)
+                    world-unit-scale))
 
 (defn get-sub-image
   "Coordinates are from original image, not scaled one."
-  [assets {:keys [file] :as image} & sub-image-bounds]
-  (assoc-dimensions
-   (assoc image
-          :scale 1
-          :texture (apply get-texture-region assets file sub-image-bounds)
-          :sub-image-bounds sub-image-bounds)))
+  [{:keys [assets world-unit-scale]} {:keys [file] :as image} & sub-image-bounds]
+  (assoc-dimensions (assoc image
+                           :scale 1
+                           :texture (apply get-texture-region assets file sub-image-bounds)
+                           :sub-image-bounds sub-image-bounds)
+                    world-unit-scale))
 
-(defn spritesheet [assets file tilew tileh]
-  (assoc (create assets file) :tilew tilew :tileh tileh))
+(defn spritesheet [context file tilew tileh]
+  (assoc (create context file) :tilew tilew :tileh tileh))
 
-(defn get-sprite [assets {:keys [tilew tileh] :as sheet} [x y]]
-  (get-sub-image assets sheet (* x tilew) (* y tileh) tilew tileh))
+(defn get-sprite [context {:keys [tilew tileh] :as sheet} [x y]]
+  (get-sub-image context sheet (* x tilew) (* y tileh) tilew tileh))

@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [x.x :refer [defcomponent update-map]]
             [gdl.lc :as lc]
-            gdl.graphics.shape-drawer
+            [gdl.graphics.shape-drawer :as shape-drawer]
             [gdl.graphics.gui :as gui]
             [gdl.graphics.world :as world]
             [gdl.scene2d.ui :as ui])
@@ -16,6 +16,27 @@
            (com.badlogic.gdx.backends.lwjgl3 Lwjgl3Application Lwjgl3ApplicationConfiguration)
            com.badlogic.gdx.utils.SharedLibraryLoader
            (com.badlogic.gdx.utils.viewport Viewport FitViewport)))
+
+(defn render-with [{:keys [^SpriteBatch batch
+                           gui-camera
+                           world-camera
+                           world-unit-scale]
+                    :as context}
+                   gui-or-world
+                   renderfn]
+  (let [^OrthographicCamera camera (case gui-or-world
+                                     :gui gui-camera
+                                     :world world-camera)
+        unit-scale (case gui-or-world
+                     :gui 1
+                     :world world-unit-scale)]
+    (shape-drawer/set-line-width unit-scale)
+    (.setColor batch Color/WHITE) ; fix scene2d.ui.tooltip flickering
+    (.setProjectionMatrix batch (.combined camera))
+    (.begin batch)
+    (renderfn (assoc context :unit-scale unit-scale))
+    (.end batch)
+    (shape-drawer/set-line-width 1)))
 
 (defn- update-viewports [{:keys [gui-viewport world-viewport]} w h]
   (let [center-camera? true]
@@ -83,7 +104,6 @@
 (defn- default-components [{:keys [tile-size]}]
   (let [batch (SpriteBatch.)
 
-        gui-unit-scale 1
         gui-camera (OrthographicCamera.)
         gui-viewport (FitViewport. (.getWidth Gdx/graphics)
                                    (.getHeight Gdx/graphics)
@@ -101,15 +121,18 @@
                                :sound-files-extensions #{"wav"}
                                :image-files-extensions #{"png" "bmp"}
                                :log-load-assets? false})
-     :gui-unit-scale gui-unit-scale
+
+     :gui-camera gui-camera
      :gui-viewport gui-viewport
+     :gdl.graphics.gui {:gui-viewport gui-viewport}
+
      :world-unit-scale world-unit-scale
+     :world-camera world-camera
      :world-viewport world-viewport
-     :gdl.graphics.gui {:gui-camera gui-camera
-                        :gui-viewport gui-viewport}
      :gdl.graphics.world {:world-unit-scale world-unit-scale
                           :world-camera world-camera
                           :world-viewport world-viewport}
+
      :gdl.graphics.shape-drawer batch
      ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
      :gdl.scene2d.ui (ui/skin (.internal Gdx/files "scene2d.ui.skin/uiskin.json"))}))
