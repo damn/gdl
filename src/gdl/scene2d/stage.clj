@@ -1,4 +1,5 @@
 (ns gdl.scene2d.stage
+  "Helper function for creating com.badlogic.gdx.scenes.scene2d.Stage which implements also clojure.lang.ILookup to access actors with an id."
   (:require [gdl.scene2d.actor :as actor])
   (:import com.badlogic.gdx.scenes.scene2d.Stage))
 
@@ -13,8 +14,6 @@
     (first (filter #(= id (actor/id %))
                    actors))))
 
-; => part of Game/State/Context protocol => takes gui/viewport & batch
-; => I dont want to  know about batch, anywhere !!
 (defn create ^Stage [viewport batch]
   (proxy [Stage clojure.lang.ILookup] [viewport batch]
     (valAt

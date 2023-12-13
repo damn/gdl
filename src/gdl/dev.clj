@@ -1,9 +1,22 @@
 (ns gdl.dev
+  "Starts a dev loop using clojure.tools.namespace.repl/refresh in order to restart the app without
+  restarting the JVM.
+  Also starts an nrepl server which will keep up even between app crashes and restarts.
+
+  How to use:
+  lein run -m gdl.dev-loop ~app-namespace~ ~app-fn-with-no-args~
+
+  Example:
+  lein run -m gdl.dev-loop gdl.simple-test app
+
+  See also project.clj for the `lein dev` shortcut.
+
+  In case of an error, the console prints `WAITING FOR RESTART` and
+  the `gdl.dev/restart!` function will restart the app and call `refresh`."
   (:require [clojure.java.io :as io]
             [nrepl.server :refer [start-server]]
             [clojure.tools.namespace.repl :refer [disable-reload!
-                                                  refresh
-                                                  refresh-all]]))
+                                                  refresh]]))
 
 (disable-reload!) ; keep same connection/nrepl-server up throughout refreshs
 
@@ -24,7 +37,10 @@
 
 (def ^:private app-start-failed (atom false))
 
-(defn restart! []
+(defn restart!
+  "Calls refresh on all namespaces with file changes and restarts the application.
+  (has to be started with `lein run -m dev-loop`)"
+  []
   (reset! app-start-failed false)
   (locking obj
     (println "\n\n>>> RESTARTING <<<")
@@ -32,19 +48,20 @@
 
 (require '[clj-commons.pretty.repl :as p])
 
-(defn dev-loop []
+(declare ^:private refresh-result)
+
+(defn ^:no-doc dev-loop []
   (println "start-app")
   (try (start-app)
        (catch Throwable t
          (p/pretty-pst t)
          (println "app-start-failed")
          (reset! app-start-failed true)))
-
   (loop []
     (when-not @app-start-failed
       (do
        (println "refresh")
-       (def refresh-result (refresh :after 'gdl.dev-loop/dev-loop))
+       (.bindRoot #'refresh-result (refresh :after 'gdl.dev-loop/dev-loop))
        (p/pretty-pst refresh-result)
        (println "error on refresh")))
     (wait!)
@@ -63,15 +80,12 @@
     (.deleteOnExit ^java.io.File port-file)
     (spit port-file port)))
 
+(declare ^:private nrepl-server)
+
 (defn -main [& [app-namespace app-start-fn]]
   (.bindRoot #'app-ns (symbol app-namespace))
   (.bindRoot #'app-fn (symbol (str app-namespace "/" app-start-fn)))
-
-  (defonce ^:private nrepl-server (start-server))
+  (.bindRoot #'nrepl-server (start-server))
   (save-port-file nrepl-server)
   ;(println "Started nrepl server on port" (:port nrepl-server))
-
   (dev-loop))
-
-; Example:
-; lein run -m gdl.dev-loop gdl.simple-test app

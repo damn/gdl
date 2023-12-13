@@ -1,4 +1,6 @@
 (ns gdl.scene2d.actor
+  "Helper functions for com.badlogic.gdx.scenes.scene2d.Actor
+  'id' is defined by using .getUserObject and .setUserObject in Actor class."
   (:import (com.badlogic.gdx.scenes.scene2d Actor Touchable)))
 
 (defn toggle-visible! [^Actor actor]

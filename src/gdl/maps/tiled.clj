@@ -1,4 +1,5 @@
 (ns gdl.maps.tiled
+  "Convinience API for the com.badlogic.gdx.maps.tiled classes."
   (:import com.badlogic.gdx.graphics.OrthographicCamera
            [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
            [com.badlogic.gdx.maps.tiled TmxMapLoader TiledMap TiledMapTile

@@ -1,4 +1,5 @@
 (ns gdl.graphics.color
+  "Convinience constructors for com.badlogic.gdx.graphics.Color, which do float casting on the arguments."
   (:import com.badlogic.gdx.graphics.Color))
 
 (defn rgb

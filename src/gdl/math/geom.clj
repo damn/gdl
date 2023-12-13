@@ -1,4 +1,5 @@
 (ns gdl.math.geom
+  "API wrapping com.badlogic.gdx.math.Intersector"
   (:import (com.badlogic.gdx.math Rectangle Circle Intersector)))
 
 (defmulti ^:private collides?* (fn [a b] [(class a) (class b)]))

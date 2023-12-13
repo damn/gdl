@@ -1,4 +1,5 @@
-(ns gdl.graphics.draw)
+(ns gdl.graphics.draw
+  "Main protocol for drawing with a 'drawer' object.")
 
 (defprotocol Drawer
   (text [_ {:keys [font text x y h-align up?]}])

@@ -1,5 +1,6 @@
 (ns gdl.lifecycle
-  "https://libgdx.com/wiki/app/the-life-cycle"
+  "Lifecycle defsystem's
+  See also: https://libgdx.com/wiki/app/the-life-cycle"
   (:require [x.x :refer [defsystem]]))
 
 ; TODO consistent last arg = context/game/state like in game.entity

@@ -1,4 +1,6 @@
 (ns gdl.scene2d.ui
+  "Widget constructors and helper functions for com.kotcrab.vis.ui
+  See: https://github.com/kotcrab/vis-ui"
   (:require [x.x :refer [defmodule]]
             [gdl.lifecycle :as lc]
             [gdl.scene2d.actor :as actor])

@@ -1,4 +1,5 @@
 (ns gdl.math.raycaster
+  "An implementation of Bresenham line drawing algorithm for casting rays on a two dimensional array."
   (:import gdl.RayCaster))
 
 ; boolean array used because 10x faster than access to clojure grid data structure

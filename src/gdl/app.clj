@@ -1,4 +1,7 @@
 (ns gdl.app
+  "Main namespace for starting an app and changing the current screen.
+
+  Sets up SpriteBatch, viewports for GUI and WORLD, and supplies lifecycle management."
   (:require [clojure.string :as str]
             [x.x :refer [defcomponent update-map]]
             [gdl.lifecycle :as lc]

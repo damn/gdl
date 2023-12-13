@@ -1,4 +1,5 @@
 (ns gdl.math.vector
+  "API for using com.badlogic.gdx.math.Vector2 with clojure [x y] vectors."
   (:import [com.badlogic.gdx.math Vector2 MathUtils]))
 
 (defn- ^Vector2 ->v [[x y]]

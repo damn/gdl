@@ -1,4 +1,6 @@
 (ns gdl.graphics.image
+  "Create image objects, which contain a TextureRegion and have information on the pixel-dimensions and
+  world-unit-dimensions to be drawn, also can have a color."
   (:import (com.badlogic.gdx.graphics Texture)
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
 

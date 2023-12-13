@@ -1,4 +1,5 @@
-(ns gdl.graphics.animation)
+(ns gdl.graphics.animation
+  "An immutable animation defrecord (plain map) for passing image objects to 'frames'.")
 
 (defprotocol Animation
   (tick [_ delta])
