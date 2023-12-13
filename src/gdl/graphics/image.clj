@@ -2,30 +2,9 @@
   (:import (com.badlogic.gdx.graphics Texture)
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
 
-; TODO
-; lots of simplification potential -> constructor take texture-region directly?, no need so many
-; complicated constructors
-; sprite-batch or scaling factor can set unit-scale ? independent ?
-; pass dimensions @ image component (body dimensions?)
-; => maybe store on rendering the dimensions per unit-scale as a side effect (cache)
-; inside the 'image'
-; maybe use only texture-region itself (for example in game.properties,
-; need in ui only texture-region also and no image ....) only required @ game., not property-editor.
-
-; Explanation why not using libgdx Sprite class:
-; * mutable fields
-; * render in certain position/scale -> the sprite is modified somewhere else !
-; * would have to reset it after every render ... or copy ?...
-; * -> I cache only dimensions & scale for my texture-regions
-; * color & rotation applied on rendering
-
-
 (defn- texture-dimensions [^TextureRegion texture]
   [(.getRegionWidth  texture)
    (.getRegionHeight texture)])
-
-(def pixel-dimensions :pixel-dimensions)
-(def world-unit-dimensions :world-unit-dimensions)
 
 (defn- assoc-dimensions [{:keys [texture scale] :as image} world-unit-scale]
   {:pre [(number? world-unit-scale)

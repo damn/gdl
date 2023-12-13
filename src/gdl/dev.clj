@@ -1,4 +1,4 @@
-(ns gdl.dev-loop
+(ns gdl.dev
   (:require [clojure.java.io :as io]
             [nrepl.server :refer [start-server]]
             [clojure.tools.namespace.repl :refer [disable-reload!
@@ -7,22 +7,22 @@
 
 (disable-reload!) ; keep same connection/nrepl-server up throughout refreshs
 
-(declare app-ns
-         app-fn)
+(declare ^:private app-ns
+         ^:private app-fn)
 
-(defn start-app []
+(defn- start-app []
   (eval `(do ; old namespace/var bindings are unloaded with refresh-all so always evaluate them fresh
           (require (quote ~app-ns))
           (~app-fn))))
 
-(def ^Object obj (Object.))
+(def ^:private ^Object obj (Object.))
 
-(defn wait! []
+(defn- wait! []
   (locking obj
     (println "\n\n>>> WAITING FOR RESTART <<<")
     (.wait obj)))
 
-(def app-start-failed (atom false))
+(def ^:private app-start-failed (atom false))
 
 (defn restart! []
   (reset! app-start-failed false)
@@ -51,7 +51,7 @@
     (recur)))
 
 ; ( I dont know why nrepl start-server does not have this included ... )
-(defn save-port-file
+(defn- save-port-file
   "Writes a file relative to project classpath with port number so other tools
   can infer the nREPL server port.
   Takes nREPL server map and processed CLI options map.
@@ -67,7 +67,7 @@
   (.bindRoot #'app-ns (symbol app-namespace))
   (.bindRoot #'app-fn (symbol (str app-namespace "/" app-start-fn)))
 
-  (defonce nrepl-server (start-server))
+  (defonce ^:private nrepl-server (start-server))
   (save-port-file nrepl-server)
   ;(println "Started nrepl server on port" (:port nrepl-server))
 

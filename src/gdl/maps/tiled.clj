@@ -1,4 +1,4 @@
-(ns gdl.tiled
+(ns gdl.maps.tiled
   (:import com.badlogic.gdx.graphics.OrthographicCamera
            [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
            [com.badlogic.gdx.maps.tiled TmxMapLoader TiledMap TiledMapTile

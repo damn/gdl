@@ -1,12 +1,5 @@
-; use a clojure vector2d lib?
-; https://clojars.org/vector-2d
-; ?
-
-; TODO intersector & vector in math/
-(ns gdl.vector
+(ns gdl.math.vector
   (:import [com.badlogic.gdx.math Vector2 MathUtils]))
-
-; TODO there must be some clojure library to automate this ?
 
 (defn- ^Vector2 ->v [[x y]]
   (Vector2. x y))

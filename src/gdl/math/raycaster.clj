@@ -1,4 +1,4 @@
-(ns gdl.raycaster
+(ns gdl.math.raycaster
   (:import gdl.RayCaster))
 
 ; boolean array used because 10x faster than access to clojure grid data structure

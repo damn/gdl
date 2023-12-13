@@ -1,23 +1,27 @@
 (ns gdl.simple-test
-  (:require [x.x :refer [defmodule]]
-            [gdl.lc :as lc]
+  (:require [x.x :refer [defcomponent]]
+            [gdl.lifecycle :as lc]
             [gdl.app :as app]
-            [gdl.draw :as draw]
+            [gdl.graphics.draw :as draw]
             [gdl.graphics.freetype :as freetype])
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.graphics.Color
            com.badlogic.gdx.graphics.g2d.BitmapFont))
 
-(defmodule {:keys [special-font default-font]}
+(defcomponent :default-font font
+  (lc/create [_ _ctx]
+    (BitmapFont.))
+  (lc/dispose [_]
+    (.dispose ^BitmapFont font)))
+
+(defcomponent :screen {:keys [special-font default-font]}
   (lc/create [_ _ctx]
     {:special-font (freetype/generate (.internal Gdx/files "exocet/films.EXL_____.ttf")
-                                      16)
-     :default-font (BitmapFont.)})
+                                      16)})
   (lc/dispose [_]
-    (.dispose ^BitmapFont special-font)
-    (.dispose ^BitmapFont default-font))
+    (.dispose ^BitmapFont special-font))
   (lc/render [_ {:keys [gui-mouse-position world-mouse-position] :as context}]
-    (app/render-with (assoc context :default-font default-font)
+    (app/render-with context
                      :gui
                      (fn [drawer]
                        (let [[wx wy] (map #(format "%.2f" %) world-mouse-position)
@@ -40,5 +44,6 @@
                     :width 800
                     :height 600
                     :full-screen? false}
-              :modules {:gdl.simple-test nil}
-              :first-screen :gdl.simple-test}))
+              :modules {:default-font nil
+                        :screen nil}
+              :first-screen :screen}))

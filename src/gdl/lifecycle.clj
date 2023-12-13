@@ -1,4 +1,4 @@
-(ns gdl.lc
+(ns gdl.lifecycle
   "https://libgdx.com/wiki/app/the-life-cycle"
   (:require [x.x :refer [defsystem]]))
 

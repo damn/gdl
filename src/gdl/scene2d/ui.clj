@@ -1,6 +1,6 @@
 (ns gdl.scene2d.ui
   (:require [x.x :refer [defmodule]]
-            [gdl.lc :as lc]
+            [gdl.lifecycle :as lc]
             [gdl.scene2d.actor :as actor])
   (:import com.badlogic.gdx.files.FileHandle
            com.badlogic.gdx.graphics.g2d.TextureRegion
