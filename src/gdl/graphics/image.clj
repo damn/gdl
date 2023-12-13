@@ -1,5 +1,5 @@
 (ns gdl.graphics.image
-  (:import (com.badlogic.gdx.graphics Color Texture)
+  (:import (com.badlogic.gdx.graphics Texture)
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
 
 ; TODO
@@ -19,45 +19,6 @@
 ; * -> I cache only dimensions & scale for my texture-regions
 ; * color & rotation applied on rendering
 
-(defn- draw-texture [^Batch batch texture [x y] [w h] rotation color]
-  (if color (.setColor batch color))
-  (.draw batch texture
-         x
-         y
-         (/ w 2) ; rotation origin
-         (/ h 2)
-         w ; width height
-         h
-         1 ; scaling factor
-         1
-         rotation)
-  (if color (.setColor batch Color/WHITE)))
-
-(defn- unit-dimensions [{:keys [unit-scale world-unit-scale] :as context} image]
-  {:pre [(number? unit-scale)]}
-  (cond
-   (= unit-scale world-unit-scale) (:world-unit-dimensions image)
-   (= unit-scale 1) (:pixel-dimensions image)))
-
-(defn draw
-  ([{:keys [batch] :as context} {:keys [texture color] :as image} position]
-   (draw-texture batch texture position (unit-dimensions context image) 0 color))
-  ([context image x y]
-   (draw context image [x y])))
-
-(defn draw-rotated-centered
-  [{:keys [batch] :as context} {:keys [texture color] :as image} rotation [x y]]
-  (let [[w h] (unit-dimensions context image)]
-    (draw-texture batch
-                  texture
-                  [(- x (/ w 2))
-                   (- y (/ h 2))]
-                  [w h]
-                  rotation
-                  color)))
-
-(defn draw-centered [context image position]
-  (draw-rotated-centered context image 0 position))
 
 (defn- texture-dimensions [^TextureRegion texture]
   [(.getRegionWidth  texture)

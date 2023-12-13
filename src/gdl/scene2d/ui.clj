@@ -6,14 +6,10 @@
            com.badlogic.gdx.graphics.g2d.TextureRegion
            com.badlogic.gdx.scenes.scene2d.Actor
            (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
-           ; TODO unused objects remove... VisUI & also remove default-skin then
            (com.badlogic.gdx.scenes.scene2d.ui Cell Table Skin WidgetGroup TextButton CheckBox Window Button
-            Button$ButtonStyle ImageButton ImageButton$ImageButtonStyle Label TooltipManager Tooltip
-            TextTooltip TextField SplitPane Stack Image)
+            Label TooltipManager Tooltip TextTooltip TextField SplitPane Stack Image)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
            (com.kotcrab.vis.ui.widget VisTextField VisTable VisTextButton VisImageButton VisWindow VisLabel VisSplitPane VisCheckBox)))
-
-; TODO use VisToolTip -> remove default-skin
 
 (declare ^Skin default-skin)
 
@@ -68,12 +64,10 @@
     (.row table))
   table)
 
-(defn pack [^WidgetGroup widget-group]
-  (.pack widget-group))
-
 (defn set-widget-group-opts [^WidgetGroup widget-group {:keys [fill-parent? pack?]}]
   (.setFillParent widget-group (boolean fill-parent?))
-  (when pack? (pack widget-group))
+  (when pack?
+    (.pack widget-group))
   widget-group)
 
 (defn set-table-opts [^Table table {:keys [rows cell-defaults]}]
@@ -109,7 +103,7 @@
 
 ; TODO give directly texture-region
 ; TODO check how to make toggle-able ? with hotkeys for actionbar trigger ?
-(defn image-button ^ImageButton [image on-clicked]
+(defn image-button ^VisImageButton [image on-clicked]
   (let [button (VisImageButton. (TextureRegionDrawable. ^TextureRegion (:texture image)))]
     (.addListener button
                   (proxy [ChangeListener] []
@@ -161,7 +155,6 @@
   (TextTooltip. "" (instant-show-tooltip-manager textfn) default-skin))
 
 ; TODO is not decendend of SplitPane anymore => check all type hints here
-
 (defn split-pane ^VisSplitPane [& {:keys [^Actor first-widget
                                           ^Actor second-widget
                                           ^Boolean vertical?] :as opts}]
@@ -171,6 +164,7 @@
 (defn stack ^Stack []
   (Stack.))
 
+; TODO VisImage, check other widgets too replacements ?
 (defn image ^Image [^Drawable drawable & opts]
   (-> (Image. drawable)
       (set-opts opts)))
