@@ -1,8 +1,7 @@
 set -e
 
 git checkout gh-pages
-git merge main
-git commit -m 'Merge main'
+git merge main --commit
 lein codox
 rm -rf docs
 mv target/doc docs
