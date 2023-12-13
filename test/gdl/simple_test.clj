@@ -2,8 +2,6 @@
   (:require [x.x :refer [defmodule]]
             [gdl.lc :as lc]
             [gdl.app :as app]
-            [gdl.graphics.world :as world]
-            [gdl.graphics.gui :as gui]
             [gdl.graphics.font :as font]
             [gdl.graphics.freetype :as freetype])
   (:import com.badlogic.gdx.Gdx
@@ -17,12 +15,12 @@
   (lc/dispose [_]
     (.dispose ^BitmapFont special-font)
     (.dispose ^BitmapFont default-font))
-  (lc/render [_ context]
+  (lc/render [_ {:keys [gui-mouse-position world-mouse-position] :as context}]
     (app/render-with (assoc context :default-font default-font)
                      :gui
                      (fn [context]
-                       (let [[wx wy] (map #(format "%.2f" %) (world/mouse-position))
-                             [gx gy] (gui/mouse-position)
+                       (let [[wx wy] (map #(format "%.2f" %) world-mouse-position)
+                             [gx gy] gui-mouse-position
                              the-str (str "World x " wx "\n"
                                           "World y " wy "\n"
                                           "GUI x " gx "\n"

@@ -2,9 +2,8 @@
   (:require [clojure.string :as str]
             [x.x :refer [defcomponent update-map]]
             [gdl.lc :as lc]
+            [gdl.graphics.viewport :as viewport]
             [gdl.graphics.shape-drawer :as shape-drawer]
-            [gdl.graphics.gui :as gui]
-            [gdl.graphics.world :as world]
             [gdl.scene2d.ui :as ui])
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
            com.badlogic.gdx.audio.Sound
@@ -102,42 +101,47 @@
     (.dispose ^AssetManager manager)))
 
 (defn- default-components [{:keys [tile-size]}]
-  (let [batch (SpriteBatch.)
+  (let [batch (SpriteBatch.)]
+    (merge {:batch batch
+            :gdl.graphics.shape-drawer batch
+            :assets (load-all-assets {:folder "resources/" ; TODO these are classpath settings ?
+                                      :sound-files-extensions #{"wav"}
+                                      :image-files-extensions #{"png" "bmp"}
+                                      :log-load-assets? false})
+            ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
+            :gdl.scene2d.ui (ui/skin (.internal Gdx/files "scene2d.ui.skin/uiskin.json"))}
+           (let [gui-camera (OrthographicCamera.)
+                 gui-viewport (FitViewport. (.getWidth Gdx/graphics)
+                                            (.getHeight Gdx/graphics)
+                                            gui-camera)]
+             {:gui-camera   gui-camera
+              :gui-viewport gui-viewport
+              :gui-viewport-width  (.getWorldWidth  gui-viewport)
+              :gui-viewport-height (.getWorldHeight gui-viewport)})
+           (let [world-camera (OrthographicCamera.)
+                 world-unit-scale (/ (or tile-size 1))
+                 world-viewport (let [width  (* (.getWidth Gdx/graphics) world-unit-scale)
+                                      height (* (.getHeight Gdx/graphics) world-unit-scale)
+                                      y-down? false]
+                                  (.setToOrtho world-camera y-down? width height)
+                                  (FitViewport. width height world-camera))]
+             {:world-unit-scale world-unit-scale
+              :world-camera     world-camera
+              :world-viewport   world-viewport
+              :world-viewport-width  (.getWorldWidth  world-viewport)
+              :world-viewport-height (.getWorldHeight world-viewport)}))))
 
-        gui-camera (OrthographicCamera.)
-        gui-viewport (FitViewport. (.getWidth Gdx/graphics)
-                                   (.getHeight Gdx/graphics)
-                                   gui-camera)
+(def ^:private state (atom nil))
 
-        world-unit-scale (/ (or tile-size 1))
-        world-camera (OrthographicCamera.)
-        world-viewport (let [width  (* (.getWidth Gdx/graphics) world-unit-scale)
-                             height (* (.getHeight Gdx/graphics) world-unit-scale)
-                             y-down? false]
-                         (.setToOrtho world-camera y-down? width height)
-                         (FitViewport. width height world-camera))]
-    {:batch batch
-     :assets (load-all-assets {:folder "resources/" ; TODO these are classpath settings ?
-                               :sound-files-extensions #{"wav"}
-                               :image-files-extensions #{"png" "bmp"}
-                               :log-load-assets? false})
+(defn- update-mouse-positions [context]
+  (assoc context
+         :gui-mouse-position (mapv int (viewport/unproject-mouse-posi (:gui-viewport context)))
+         ; TODO clamping only works for gui-viewport ? check. comment if true
+         ; TODO ? "Can be negative coordinates, undefined cells."
+         :world-mouse-position (viewport/unproject-mouse-posi (:world-viewport context))))
 
-     :gui-camera gui-camera
-     :gui-viewport gui-viewport
-     :gdl.graphics.gui {:gui-viewport gui-viewport}
-
-     :world-unit-scale world-unit-scale
-     :world-camera world-camera
-     :world-viewport world-viewport
-     :gdl.graphics.world {:world-unit-scale world-unit-scale
-                          :world-camera world-camera
-                          :world-viewport world-viewport}
-
-     :gdl.graphics.shape-drawer batch
-     ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
-     :gdl.scene2d.ui (ui/skin (.internal Gdx/files "scene2d.ui.skin/uiskin.json"))}))
-
-(def state (atom nil))
+(defn current-context []
+  (update-mouse-positions @state))
 
 (defn- current-screen-component []
   (let [k (::current-screen @state)]
@@ -151,7 +155,8 @@
   (when (::current-screen @state)
     (lc/hide (current-screen-component)))
   (swap! state assoc ::current-screen k)
-  (lc/show (current-screen-component)))
+  (lc/show (current-screen-component)
+           (current-context)))
 
 (defn- application-adapter [{:keys [modules first-screen] :as config}]
   (proxy [ApplicationAdapter] []
@@ -165,11 +170,12 @@
       (swap! state update-map lc/dispose))
     (render []
       (ScreenUtils/clear Color/BLACK)
-      (fix-viewport-update @state)
-      (lc/render (current-screen-component) @state)
-      (lc/tick (current-screen-component)
-               @state
-               (* (.getDeltaTime Gdx/graphics) 1000)))
+      (let [context (current-context)]
+        (fix-viewport-update context)
+        (lc/render (current-screen-component) context)
+        (lc/tick (current-screen-component)
+                 context
+                 (* (.getDeltaTime Gdx/graphics) 1000))))
     (resize [w h]
       (update-viewports @state w h))))
 
@@ -189,3 +195,6 @@
 (defn start [config]
   (Lwjgl3Application. (application-adapter config)
                       (lwjgl3-configuration (:app config))))
+
+(defn pixels->world-units [{:keys [world-unit-scale]} pixels]
+  (* pixels world-unit-scale))

@@ -13,6 +13,8 @@
     (first (filter #(= id (actor/id %))
                    actors))))
 
+; => part of Game/State/Context protocol => takes gui/viewport & batch
+; => I dont want to  know about batch, anywhere !!
 (defn create ^Stage [viewport batch]
   (proxy [Stage clojure.lang.ILookup] [viewport batch]
     (valAt

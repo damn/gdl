@@ -2,11 +2,13 @@
   "https://libgdx.com/wiki/app/the-life-cycle"
   (:require [x.x :refer [defsystem]]))
 
-(defsystem create  [_ state])
+; TODO consistent last arg = context/game/state like in game.entity
+
+(defsystem create  [_ context])
 (defsystem dispose [_])
 
 ; screen/.*
-(defsystem show   [_])
+(defsystem show   [_ context])
 (defsystem hide   [_])
-(defsystem render [_ state])
-(defsystem tick   [_ state delta])
+(defsystem render [_ context])
+(defsystem tick   [_ context delta])

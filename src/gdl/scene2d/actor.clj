@@ -1,6 +1,9 @@
 (ns gdl.scene2d.actor
   (:import (com.badlogic.gdx.scenes.scene2d Actor Touchable)))
 
+(defn toggle-visible! [^Actor actor]
+  (.setVisible actor (not (.isVisible actor))))
+
 (defn id [^Actor actor]
   (.getUserObject actor))
 
