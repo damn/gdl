@@ -4,10 +4,10 @@
   Also starts an nrepl server which will keep up even between app crashes and restarts.
 
   How to use:
-  lein run -m gdl.dev-loop ~app-namespace~ ~app-fn-with-no-args~
+  lein run -m gdl.dev ~app-namespace~ ~app-fn-with-no-args~
 
   Example:
-  lein run -m gdl.dev-loop gdl.simple-test app
+  lein run -m gdl.dev gdl.simple-test app
 
   See also project.clj for the `lein dev` shortcut.
 
@@ -39,7 +39,7 @@
 
 (defn restart!
   "Calls refresh on all namespaces with file changes and restarts the application.
-  (has to be started with `lein run -m dev-loop`)"
+  (has to be started with `lein run -m dev`)"
   []
   (reset! app-start-failed false)
   (locking obj
@@ -61,7 +61,7 @@
     (when-not @app-start-failed
       (do
        (println "refresh")
-       (.bindRoot #'refresh-result (refresh :after 'gdl.dev-loop/dev-loop))
+       (.bindRoot #'refresh-result (refresh :after 'gdl.dev/dev-loop))
        (p/pretty-pst refresh-result)
        (println "error on refresh")))
     (wait!)

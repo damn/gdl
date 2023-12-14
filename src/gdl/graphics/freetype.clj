@@ -19,7 +19,7 @@
     (set! (.magFilter params) Texture$TextureFilter/Linear)
     params))
 
-(defn generate [ttf-file size]
+(defn generate [ttf-file size] ; TODO use context, call file internal, size keyword param/.
   (let [generator (-> ttf-file FreeTypeFontGenerator.)
         font (.generateFont generator (->params size))]
     (.dispose generator)
