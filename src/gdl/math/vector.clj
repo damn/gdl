@@ -2,6 +2,10 @@
   "API for using com.badlogic.gdx.math.Vector2 with clojure [x y] vectors."
   (:import [com.badlogic.gdx.math Vector2 MathUtils]))
 
+; TODO not important badlogic, using clojure vectors
+; could extend some protocol by clojure vectors and just require the protocol
+; also call vector2 v2/add ? v2/scale ?
+
 (defn- ^Vector2 ->v [[x y]]
   (Vector2. x y))
 
@@ -9,7 +13,7 @@
   [(.x ^Vector2 v)
    (.y ^Vector2 v)])
 
-(defn scale     [v n]    (->p (.scl ^Vector2 (->v v) (float n))))
+(defn scale     [v n]    (->p (.scl ^Vector2 (->v v) (float n)))) ; TODO just (mapv (partial * 2) v)
 (defn normalise [v]      (->p (.nor ^Vector2 (->v v))))
 (defn add       [v1 v2]  (->p (.add ^Vector2 (->v v1) ^Vector2 (->v v2))))
 (defn length    [v]      (.len ^Vector2 (->v v)))

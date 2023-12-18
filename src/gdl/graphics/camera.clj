@@ -13,7 +13,8 @@
 
 (defn set-position! [^OrthographicCamera camera [x y]]
   (set! (.x (.position camera)) (float x))
-  (set! (.y (.position camera)) (float y)))
+  (set! (.y (.position camera)) (float y))
+  (.update camera))
 
 (defn frustum [^OrthographicCamera camera]
   (let [frustum-points (for [^Vector3 point (take 4 (.planePoints (.frustum camera)))

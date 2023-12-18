@@ -16,7 +16,8 @@
   (:require [clojure.java.io :as io]
             [nrepl.server :refer [start-server]]
             [clojure.tools.namespace.repl :refer [disable-reload!
-                                                  refresh]]))
+                                                  refresh]]
+            [clj-commons.pretty.repl :as p]))
 
 (disable-reload!) ; keep same connection/nrepl-server up throughout refreshs
 
@@ -46,7 +47,6 @@
     (println "\n\n>>> RESTARTING <<<")
     (.notify obj)))
 
-(require '[clj-commons.pretty.repl :as p])
 
 (declare ^:private refresh-result)
 

@@ -28,6 +28,10 @@ Add the following to your project.clj file:
 
 * [API docs](https://damn.github.io/gdl/)
 
+<p align="center">
+  <img src="https://github.com/damn/gdx/blob/main/namespaces.png"/>
+</p>
+
 # On Mac
 
 You need to set this environment variable for the lwjgl3 backend to work on mac:
