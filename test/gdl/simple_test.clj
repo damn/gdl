@@ -34,7 +34,7 @@
   (tick [_ _context _delta]))
 
 (defn create-context []
-  (let [context (default-context/->Context)]
+  (let [context (default-context/->context)]
     (merge context
            {:special-font (generate-ttf context {:file "exocet/films.EXL_____.ttf"
                                                  :size 16})

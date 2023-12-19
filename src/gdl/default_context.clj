@@ -8,7 +8,7 @@
             [gdl.context.gui-world-views :as gui-world-views]
             [gdl.context.vis-ui :as vis-ui]))
 
-(defn ->Context [& {:keys [tile-size]}]
+(defn ->context [& {:keys [tile-size]}]
   (gdl.context/map->Context
    (let [context (sprite-batch/->context)]
      (merge context

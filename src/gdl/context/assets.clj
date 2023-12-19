@@ -50,3 +50,8 @@
                              :sound-files-extensions #{"wav"}
                              :image-files-extensions #{"png" "bmp"}
                              :log-load-assets? false})})
+
+(extend-type gdl.context.Context
+  gdl.context/SoundStore
+  (play-sound! [{:keys [assets]} file]
+    (.play ^Sound (get assets file))))

@@ -44,3 +44,7 @@
   (update-viewports [_ w h])
   (fix-viewport-update [_])
   (assoc-view-mouse-positions [_]))
+
+(defprotocol SoundStore
+  (play-sound! [_ file]
+               "Sound is already loaded from file, this will perform only a lookup for the sound and play it." ))
