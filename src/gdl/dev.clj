@@ -12,7 +12,13 @@
   See also project.clj for the `lein dev` shortcut.
 
   In case of an error, the console prints `WAITING FOR RESTART` and
-  the `gdl.dev/restart!` function will restart the app and call `refresh`."
+  the `gdl.dev/restart!` function will restart the app and call `refresh`.
+
+  You can bind this on a key for smooth dev experience, here in VIM:
+  ``` vimscript
+  nmap <F5> :Eval (do (in-ns 'gdl.dev)(restart!))
+  ```"
+
   (:require [clojure.java.io :as io]
             [nrepl.server :refer [start-server]]
             [clojure.tools.namespace.repl :refer [disable-reload!

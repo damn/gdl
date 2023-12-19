@@ -62,6 +62,8 @@
     ; Do not center the camera on world-viewport. We set the position there manually.
     (.update ^Viewport world-viewport w h false))
 
+  ; "Sometimes the viewport update is not triggered."
+  ; TODO (on mac osx, when resizing window, make bug report, fix it in libgdx?)
   (fix-viewport-update
     [{:keys [^Viewport gui-viewport] :as context}]
     (let [screen-width  (.getWidth  Gdx/graphics)
@@ -70,12 +72,14 @@
                      (= (.getScreenHeight gui-viewport) screen-height))
         (gdl.context/update-viewports context screen-width screen-height))))
 
-  (assoc-view-mouse-positions [context]
-    (assoc context
-           :gui-mouse-position (mapv int (unproject-mouse-posi (:gui-viewport context)))
-           ; TODO clamping only works for gui-viewport ? check. comment if true
-           ; TODO ? "Can be negative coordinates, undefined cells."
-           :world-mouse-position (unproject-mouse-posi (:world-viewport context))))
+  (gui-mouse-position [{:keys [gui-viewport]}]
+    ; TODO mapv int needed?
+    (mapv int (unproject-mouse-posi gui-viewport)))
+
+  (world-mouse-position [{:keys [world-viewport]}]
+    ; TODO clamping only works for gui-viewport ? check. comment if true
+    ; TODO ? "Can be negative coordinates, undefined cells."
+    (unproject-mouse-posi world-viewport))
 
   (pixels->world-units [{:keys [world-unit-scale]} pixels]
     (* pixels world-unit-scale)))

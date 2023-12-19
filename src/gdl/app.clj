@@ -1,64 +1,56 @@
 (ns gdl.app
   (:require [gdl.screen :as screen]
-            gdl.context
-            [gdl.disposable :refer [dispose]])
+            gdl.disposable
+            [gdl.context :refer [current-screen change-screen update-viewports fix-viewport-update]])
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
            (com.badlogic.gdx.backends.lwjgl3 Lwjgl3Application Lwjgl3ApplicationConfiguration)
            com.badlogic.gdx.graphics.Color
            com.badlogic.gdx.utils.ScreenUtils))
 
-(def state (atom nil))
+(extend-type com.badlogic.gdx.utils.Disposable
+  gdl.disposable/Disposable
+  (dispose [this]
+    (.dispose this)))
 
-(defn current-context []
-  (gdl.context/assoc-view-mouse-positions @state))
+(defn- dispose-all [context]
+  (doseq [[k value] context
+          :when (some #(extends? gdl.disposable/Disposable %)
+                      (supers (class value)))]
+    (println "Disposing " k)
+    (gdl.disposable/dispose value)))
 
-; TODO here not current-context .... should not do @state or get mouse-positions via function call
-; but then keep unprojecting ?
-; TODO TEST current logic of that screen will be continued ?
-(defn change-screen! [new-screen-key]
-  (let [{:keys [context/current-screen] :as context} @state]
-    (when-let [previous-screen (get context current-screen)]
-      (screen/hide previous-screen context))
-    (let [new-screen (new-screen-key context)]
-      (assert new-screen (str "Cannot find screen with key: " new-screen-key))
-      (swap! state assoc :context/current-screen new-screen-key)
-      (screen/show new-screen @state))))
+(extend-type gdl.context.Context
+  gdl.context/ApplicationScreens
+  (current-screen [{:keys [context/current-screen] :as context}]
+    (get context current-screen))
 
-(defn- dispose-context [context]
-  (doseq [[k value] context]
-    (cond (extends? gdl.disposable/Disposable (class value))
-          (do
-           (println "Disposing " k)
-           (dispose value))
-          ((supers (class value)) com.badlogic.gdx.utils.Disposable)
-          (do
-           (println "Disposing " k)
-           (.dispose ^com.badlogic.gdx.utils.Disposable value)))))
+  (change-screen [context new-screen-key]
+    (when-let [screen (current-screen context)]
+      (screen/hide screen context)
+      (screen/hide screen context))
+    (let [screen (new-screen-key context)
+          _ (assert screen (str "Cannot find screen with key: " new-screen-key))
+          new-context (assoc context :context/current-screen new-screen-key)]
+      (screen/show screen new-context)
+      new-context)))
 
-(defn- application-adapter [{:keys [context-fn first-screen]}]
+(defn- ->application [{:keys [current-context create-context first-screen]}]
   (proxy [ApplicationAdapter] []
     (create []
-      (reset! state (context-fn))
-      (change-screen! first-screen))
+      (reset! current-context (change-screen (create-context) first-screen)))
     (dispose []
-      (dispose-context @state))
+      (dispose-all @current-context))
     (render []
       (ScreenUtils/clear Color/BLACK)
-      (let [{:keys [context/current-screen] :as context} (current-context)
+      (let [context @current-context
             screen (current-screen context)]
-
-        ; "Sometimes the viewport update is not triggered."
-        ; TODO (on mac osx, when resizing window, make bug report, fix it in libgdx?)
-        (gdl.context/fix-viewport-update context)
+        (fix-viewport-update context)
         (screen/render screen context)
         (screen/tick screen context (* (.getDeltaTime Gdx/graphics) 1000))))
     (resize [w h]
-      ; TODO here also @state and not current-context ...
-      (gdl.context/update-viewports @state w h))))
+      (update-viewports @current-context w h))))
 
 (defn- lwjgl3-configuration [{:keys [title width height full-screen? fps]}]
-  ; https://github.com/trptr/java-wrapper/blob/39a0947f4e90857512c1999537d0de83d130c001/src/trptr/java_wrapper/locale.clj#L87
-  ; cond->
   (let [config (doto (Lwjgl3ApplicationConfiguration.)
                  (.setTitle title)
                  (.setForegroundFPS (or fps 60)))]
@@ -67,6 +59,18 @@
       (.setWindowedMode config width height))
     config))
 
-(defn start [config]
-  (Lwjgl3Application. (application-adapter config)
+(defn start
+  "Example for required keys:
+             {:app {:title \"gdl demo\"
+                    :width 800
+                    :height 600
+                    :full-screen? false}
+              :current-context current-context ; an atom
+              :create-context create-context ; function with no args creating the context
+              :first-screen :my-screen}"
+  [config]
+  (assert (:current-context config) ":current-context key not supplied")
+  (assert (:create-context config) ":create-context key not supplied")
+  (assert (:first-screen config) ":first-screen key not supplied")
+  (Lwjgl3Application. (->application config)
                       (lwjgl3-configuration (:app config))))

@@ -2,6 +2,14 @@
 
 (defrecord Context [])
 
+(defprotocol ApplicationScreens
+  (current-screen [_])
+  (change-screen [_ new-screen]
+                 "Calls screen/hide on the current-screen (if there is one).
+                 Throws AssertionError when the context does not have a new-screen.
+                 Calls screen/show on the new screen and
+                 returns the context with current-screen to new-screen."))
+
 (defprotocol TrueTypeFontGenerator
   (generate-ttf [_ {:keys [file size]}]))
 
@@ -39,11 +47,12 @@
   (render-gui-view   [_ render-fn])
   (render-world-view [_ render-fn])
   (pixels->world-units [_ pixels])
+  (gui-mouse-position [_])
+  (world-mouse-position [_])
 
-  ; use in gdl.app only
+  ; use in gdl.app only TODO
   (update-viewports [_ w h])
-  (fix-viewport-update [_])
-  (assoc-view-mouse-positions [_]))
+  (fix-viewport-update [_]))
 
 (defprotocol SoundStore
   (play-sound! [_ file]

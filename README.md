@@ -2,15 +2,27 @@
   <img src="https://github.com/damn/gdx/blob/main/logo.png" width="250" height="105"/>
 </p>
 
-#  Details
+# What is GDL?
 
-Based on [libGDX](https://libgdx.com/).
+A clojure framework for building 2D games.
 
-Supporting desktop backend and 2D graphics API only at the moment.
+# Hello World
 
-Feedback appreciated.
+You can run the hello world example in this repository with:
 
-This library is the backend for a roguelike action RPG game I am developing.
+```
+lein run -m gdl.hello-world
+```
+
+https://github.com/damn/gdl/blob/5fcf0ddb3665fcf0791954ac0e8c38e52f992c39/test/gdl/hello_world.clj#L1-L28
+
+# On Mac
+
+You need to set this environment variable:
+
+```
+export JVM_OPTS=-XstartOnFirstThread
+```
 
 # Installation
 
@@ -18,15 +30,17 @@ This library is the backend for a roguelike action RPG game I am developing.
 
 Add the following to your project.clj file:
 
-``` clojure
+```clojure
 :repositories [["jitpack" "https://jitpack.io"]]
 
 :dependencies [[com.github.damn/gdl "main-SNAPSHOT"]]
 ```
 
-# Documentation
+# [API Documentation](https://damn.github.io/gdl/)
 
-* [API docs](https://damn.github.io/gdl/)
+# Games made with GDL
+
+* [Cyber Dungeon Quest](https://github.com/damn/Cyber-Dungeon-Quest)
 
 # Namespace dependency graph
 
@@ -34,30 +48,3 @@ Add the following to your project.clj file:
   <img src="https://github.com/damn/gdx/blob/main/namespaces.png"/>
 </p>
 
-# On Mac
-
-You need to set this environment variable for the lwjgl3 backend to work on mac:
-
-```
-export JVM_OPTS=-XstartOnFirstThread
-```
-
-# Test
-
-Start the test with `lein dev`.
-
-# Games made with GDL
-
-* [Cyber Dungeon Quest](https://github.com/damn/Cyber-Dungeon-Quest)
-
-# Reloaded Workflow
-
-The command `lein dev` starts a __dev-loop__.
-When closing the app window all namespaces will be reloaded with `clojure.tools.namespace.repl/refresh-all`.
-
-There is also a function `gdl.dev/restart!` in case of errors on app-start or refresh, so there is no need to restart the JVM.
-
-You can bind this on a key , here in VIM :
-``` vimscript
-nmap <F5> :Eval (do (in-ns 'gdl.dev)(restart!))
-```
