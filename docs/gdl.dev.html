@@ -13,5 +13,10 @@ lein run -m gdl.dev gdl.simple-test app
 See also project.clj for the `lein dev` shortcut.
 
 In case of an error, the console prints `WAITING FOR RESTART` and
-the `gdl.dev/restart!` function will restart the app and call `refresh`.</pre></div><div class="public anchor" id="var--main"><h3>-main</h3><div class="usage"><code>(-main &amp; [app-namespace app-start-fn])</code></div><div class="doc"><pre class="plaintext"></pre></div><div class="src-link"><a href="https://github.com/damn/gdl/blob/main/src/gdl/dev.clj#L85">view source</a></div></div><div class="public anchor" id="var-restart.21"><h3>restart!</h3><div class="usage"><code>(restart!)</code></div><div class="doc"><pre class="plaintext">Calls refresh on all namespaces with file changes and restarts the application.
-(has to be started with `lein run -m dev`)</pre></div><div class="src-link"><a href="https://github.com/damn/gdl/blob/main/src/gdl/dev.clj#L41">view source</a></div></div></div></body></html>
+the `gdl.dev/restart!` function will restart the app and call `refresh`.
+
+You can bind this on a key for smooth dev experience, here in VIM:
+``` vimscript
+nmap &lt;F5&gt; :Eval (do (in-ns 'gdl.dev)(restart!))
+```</pre></div><div class="public anchor" id="var--main"><h3>-main</h3><div class="usage"><code>(-main &amp; [app-namespace app-start-fn])</code></div><div class="doc"><pre class="plaintext"></pre></div><div class="src-link"><a href="https://github.com/damn/gdl/blob/main/src/gdl/dev.clj#L91">view source</a></div></div><div class="public anchor" id="var-restart.21"><h3>restart!</h3><div class="usage"><code>(restart!)</code></div><div class="doc"><pre class="plaintext">Calls refresh on all namespaces with file changes and restarts the application.
+(has to be started with `lein run -m dev`)</pre></div><div class="src-link"><a href="https://github.com/damn/gdl/blob/main/src/gdl/dev.clj#L47">view source</a></div></div></div></body></html>
