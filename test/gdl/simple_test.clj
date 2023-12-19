@@ -1,17 +1,9 @@
 (ns gdl.simple-test
   (:require [gdl.app :as app]
-            gdl.default-context
-            [gdl.protocols :refer [draw-centered-image
-                                   draw-circle
-                                   draw-text
-                                   generate-ttf
-                                   create-image
-                                   render-in-gui-view]]
+            [gdl.default-context :as default-context]
+            [gdl.context :refer [draw-centered-image draw-circle draw-text generate-ttf create-image render-gui-view]]
             gdl.screen)
   (:import com.badlogic.gdx.graphics.Color))
-
-; [RED] not working with default font
-; TODO rotate image with counter and maybe scale & color too ?!
 
 (defn draw-test [{:keys [special-font
                          gui-mouse-position
@@ -38,11 +30,11 @@
   (show [_ _context])
   (hide [_ _context])
   (render [_ context]
-    (render-in-gui-view context draw-test))
+    (render-gui-view context draw-test))
   (tick [_ _context _delta]))
 
 (defn create-context []
-  (let [context (gdl.default-context/->Context)]
+  (let [context (default-context/->Context)]
     (merge context
            {:special-font (generate-ttf context {:file "exocet/films.EXL_____.ttf"
                                                  :size 16})

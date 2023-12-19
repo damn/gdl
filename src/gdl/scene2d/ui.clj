@@ -1,49 +1,15 @@
 (ns gdl.scene2d.ui
   "Widget constructors and helper functions for com.kotcrab.vis.ui
   See: https://github.com/kotcrab/vis-ui"
-  (:require gdl.protocols
+  (:require gdl.context
             [gdl.scene2d.actor :as actor])
-  (:import com.badlogic.gdx.Gdx
-           com.badlogic.gdx.files.FileHandle
+  (:import com.badlogic.gdx.files.FileHandle
            com.badlogic.gdx.graphics.g2d.TextureRegion
            com.badlogic.gdx.scenes.scene2d.Actor
            (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
-           (com.badlogic.gdx.scenes.scene2d.ui Cell Table Skin WidgetGroup TextButton CheckBox Window Button
+           (com.badlogic.gdx.scenes.scene2d.ui Skin Cell Table WidgetGroup TextButton CheckBox Window Button
             Label TooltipManager Tooltip TextTooltip TextField SplitPane Stack Image)
-           (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
            (com.kotcrab.vis.ui.widget VisTextField VisTable VisTextButton VisImageButton VisWindow VisLabel VisSplitPane VisCheckBox)))
-
-(declare ^:private ^Skin default-skin)
-
-(defn initialize! []
-  ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
-  (.bindRoot #'default-skin (Skin. (.internal Gdx/files "scene2d.ui.skin/uiskin.json")))
-  ; app crashes during startup before VisUI/dispose and we do clojure.tools.namespace.refresh-> gui elements not showing.
-  ; => actually there is a deeper issue at play
-  ; we need to dispose ALL resources which were loaded already ...
-  (when (VisUI/isLoaded)
-    (VisUI/dispose))
-  (VisUI/load #_VisUI$SkinScale/X2)
-  (reify gdl.protocols/Disposable
-    (dispose [_]
-      (.dispose default-skin)
-      (VisUI/dispose) )))
-
-(comment
- ; TODO set custom font with default skin - or set custom skin param
- ; https://stackoverflow.com/questions/45523878/libgdx-skin-not-updating-when-changing-font-programmatically
- (let [empty-skin (Skin.)]
-   (.add skin "font" my-font)
-   ; skin.addRegion(new TextureAtlas(Gdx.files.internal("mySkin.atlas")));
-   ; skin.load(Gdx.files.internal("mySkin.json"));
-   ; TODO will this overload 'default-font' ?
-   ; => I need to pass my custom skin to gdl.ui !
-   ; then, in your JSON file you can reference “font”
-   ;
-   ; {
-   ;   font: font
-   ; }
-   ))
 
 (defn set-cell-opts [^Cell cell opts]
   (doseq [[option arg] opts]
@@ -149,10 +115,12 @@
     (.hideAll manager)
     manager))
 
+(declare default-skin)
+
 ; TODO VisToolTip
 ; https://github.com/kotcrab/vis-ui/wiki/Tooltips
 (defn text-tooltip ^TextTooltip [textfn]
-  (TextTooltip. "" (instant-show-tooltip-manager textfn) default-skin))
+  (TextTooltip. "" (instant-show-tooltip-manager textfn) ^Skin default-skin))
 
 ; TODO is not decendend of SplitPane anymore => check all type hints here
 (defn split-pane ^VisSplitPane [& {:keys [^Actor first-widget

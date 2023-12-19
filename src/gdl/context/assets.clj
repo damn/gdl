@@ -1,6 +1,6 @@
 (ns gdl.context.assets
   (:require [clojure.string :as str]
-            gdl.protocols)
+            gdl.context)
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.assets.AssetManager
            com.badlogic.gdx.audio.Sound
@@ -45,7 +45,7 @@
 ; TODO assets used @ image & sound player thingy
 ; => move sounds here also
 
-(defn ->context-map []
+(defn ->context []
   {:assets (load-all-assets {:folder "resources/" ; TODO these are classpath settings ?
                              :sound-files-extensions #{"wav"}
                              :image-files-extensions #{"png" "bmp"}

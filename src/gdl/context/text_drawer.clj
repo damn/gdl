@@ -1,6 +1,6 @@
 (ns gdl.context.text-drawer
   (:require [clojure.string :as str]
-            gdl.protocols)
+            gdl.context)
   (:import com.badlogic.gdx.graphics.g2d.BitmapFont
            com.badlogic.gdx.utils.Align))
 
@@ -10,8 +10,8 @@
       count
       (* (.getLineHeight font))))
 
-(extend-type gdl.protocols.Context
-  gdl.protocols/TextDrawer
+(extend-type gdl.context.Context
+  gdl.context/TextDrawer
   (draw-text [{:keys [default-font unit-scale batch]} {:keys [font text x y h-align up?]}]
     (let [^BitmapFont font (or font default-font)
           data (.getData font)
@@ -32,5 +32,5 @@
 
 ; TODO pass optionally default-font ?
 ; TODO is redundant ....
-(defn ->context-map []
+(defn ->context []
   {:default-font (BitmapFont.)}) ; TODO does not draw world-unit-scale idk how possible, maybe setfontdata something

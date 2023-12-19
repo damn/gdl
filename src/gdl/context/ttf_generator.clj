@@ -1,10 +1,11 @@
 (ns gdl.context.ttf-generator
   "Convinience clojure constructor for the java
   com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator class."
-  (:require gdl.protocols)
+  (:require gdl.context)
   (:import com.badlogic.gdx.Gdx
            [com.badlogic.gdx.graphics Texture$TextureFilter]
-           [com.badlogic.gdx.graphics.g2d BitmapFont]
+           ; TODO unused BitmapFont? for dispose ?
+           ;[com.badlogic.gdx.graphics.g2d BitmapFont]
            [com.badlogic.gdx.graphics.g2d.freetype
             FreeTypeFontGenerator
             FreeTypeFontGenerator$FreeTypeFontParameter]))
@@ -21,8 +22,8 @@
     (set! (.magFilter params) Texture$TextureFilter/Linear)
     params))
 
-(extend-type gdl.protocols.Context
-  gdl.protocols/TrueTypeFontGenerator
+(extend-type gdl.context.Context
+  gdl.context/TrueTypeFontGenerator
   (generate-ttf [_ {:keys [file size]}]
     (let [generator (FreeTypeFontGenerator. (.internal Gdx/files file))
           font (.generateFont generator (->params size))]

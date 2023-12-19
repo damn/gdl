@@ -1,5 +1,10 @@
+; TODO make 2 = gui-view & world-view ?
+; which has view interface ....
+; I don't need in my test world-view & I don't need scene2d.ui
+; => default-modules move to test
+; => tree structure
 (ns gdl.context.gui-world-views
-  (:require gdl.protocols)
+  (:require gdl.context)
   (:import com.badlogic.gdx.Gdx
            (com.badlogic.gdx.graphics Color OrthographicCamera)
            com.badlogic.gdx.graphics.g2d.Batch
@@ -21,36 +26,36 @@
         coords (.unproject viewport (Vector2. mouse-x mouse-y))]
     [(.x coords) (.y coords)]))
 
-(defn- render-in-view [{:keys [^Batch batch
-                        shape-drawer
-                        gui-camera
-                        world-camera
-                        world-unit-scale]
-                 :as context}
-                gui-or-world
-                draw-fn]
-    (let [^OrthographicCamera camera (case gui-or-world
-                                       :gui gui-camera
-                                       :world world-camera)
-          unit-scale (case gui-or-world
-                       :gui 1
-                       :world world-unit-scale)
-          context (assoc context :unit-scale unit-scale)]
-      (.setColor batch Color/WHITE) ; fix scene2d.ui.tooltip flickering
-      (.setProjectionMatrix batch (.combined camera))
-      (.begin batch)
-      (gdl.protocols/with-shape-line-width context
-                                           unit-scale
-                                           #(draw-fn context))
-      (.end batch)))
+(defn- render-view [{:keys [^Batch batch
+                            shape-drawer
+                            gui-camera
+                            world-camera
+                            world-unit-scale]
+                     :as context}
+                    gui-or-world
+                    draw-fn]
+  (let [^OrthographicCamera camera (case gui-or-world
+                                     :gui gui-camera
+                                     :world world-camera)
+        unit-scale (case gui-or-world
+                     :gui 1
+                     :world world-unit-scale)
+        context (assoc context :unit-scale unit-scale)]
+    (.setColor batch Color/WHITE) ; fix scene2d.ui.tooltip flickering
+    (.setProjectionMatrix batch (.combined camera))
+    (.begin batch)
+    (gdl.context/with-shape-line-width context
+      unit-scale
+      #(draw-fn context))
+    (.end batch)))
 
-(extend-type gdl.protocols.Context
-  gdl.protocols/GuiWorldViews
-  (render-in-gui-view [this render-fn]
-    (render-in-view this :gui render-fn))
+(extend-type gdl.context.Context
+  gdl.context/GuiWorldViews
+  (render-gui-view [this render-fn]
+    (render-view this :gui render-fn))
 
-  (render-in-world-view [this render-fn]
-    (render-in-view this :world render-fn))
+  (render-world-view [this render-fn]
+    (render-view this :world render-fn))
 
   (update-viewports [{:keys [gui-viewport world-viewport]} w h]
     (.update ^Viewport gui-viewport   w h true)
@@ -63,7 +68,7 @@
           screen-height (.getHeight Gdx/graphics)]
       (when-not (and (= (.getScreenWidth  gui-viewport) screen-width)
                      (= (.getScreenHeight gui-viewport) screen-height))
-        (gdl.protocols/update-viewports context screen-width screen-height))))
+        (gdl.context/update-viewports context screen-width screen-height))))
 
   (assoc-view-mouse-positions [context]
     (assoc context
@@ -75,8 +80,8 @@
   (pixels->world-units [{:keys [world-unit-scale]} pixels]
     (* pixels world-unit-scale)))
 
-(defn ->context-map [& {:keys [tile-size]}]
-  (merge {:unit-scale 1}
+(defn ->context [& {:keys [tile-size]}]
+  (merge {:unit-scale 1} ;  TODO not here ? only used @ gui drawings without render-view in 2 widgets .... ? or part of gui
          (let [gui-camera (OrthographicCamera.)
                gui-viewport (FitViewport. (.getWidth  Gdx/graphics)
                                           (.getHeight Gdx/graphics)

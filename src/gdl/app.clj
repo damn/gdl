@@ -1,6 +1,7 @@
 (ns gdl.app
   (:require [gdl.screen :as screen]
-            [gdl.protocols :refer [dispose]])
+            gdl.context
+            [gdl.disposable :refer [dispose]])
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
            (com.badlogic.gdx.backends.lwjgl3 Lwjgl3Application Lwjgl3ApplicationConfiguration)
            com.badlogic.gdx.graphics.Color
@@ -9,7 +10,7 @@
 (def state (atom nil))
 
 (defn current-context []
-  (gdl.protocols/assoc-view-mouse-positions @state))
+  (gdl.context/assoc-view-mouse-positions @state))
 
 ; TODO here not current-context .... should not do @state or get mouse-positions via function call
 ; but then keep unprojecting ?
@@ -25,7 +26,7 @@
 
 (defn- dispose-context [context]
   (doseq [[k value] context]
-    (cond (extends? gdl.protocols/Disposable (class value))
+    (cond (extends? gdl.disposable/Disposable (class value))
           (do
            (println "Disposing " k)
            (dispose value))
@@ -48,12 +49,12 @@
 
         ; "Sometimes the viewport update is not triggered."
         ; TODO (on mac osx, when resizing window, make bug report, fix it in libgdx?)
-        (gdl.protocols/fix-viewport-update context)
+        (gdl.context/fix-viewport-update context)
         (screen/render screen context)
         (screen/tick screen context (* (.getDeltaTime Gdx/graphics) 1000))))
     (resize [w h]
       ; TODO here also @state and not current-context ...
-      (gdl.protocols/update-viewports @state w h))))
+      (gdl.context/update-viewports @state w h))))
 
 (defn- lwjgl3-configuration [{:keys [title width height full-screen? fps]}]
   ; https://github.com/trptr/java-wrapper/blob/39a0947f4e90857512c1999537d0de83d130c001/src/trptr/java_wrapper/locale.clj#L87
