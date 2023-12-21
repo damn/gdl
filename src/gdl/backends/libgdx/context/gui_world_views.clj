@@ -1,4 +1,4 @@
-(ns gdl.context.gui-world-views
+(ns gdl.backends.libgdx.context.gui-world-views
   (:require gdl.context)
   (:import com.badlogic.gdx.Gdx
            (com.badlogic.gdx.graphics Color OrthographicCamera)

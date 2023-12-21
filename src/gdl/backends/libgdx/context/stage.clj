@@ -1,4 +1,4 @@
-(ns gdl.context.stage
+(ns gdl.backends.libgdx.context.stage
   (:require [gdl.context :refer [gui-mouse-position current-screen get-stage]]
             gdl.disposable
             [gdl.screen :as screen]
@@ -10,16 +10,20 @@
   gdl.disposable/Disposable
   (dispose [_]
     (.dispose stage))
+
   gdl.screen/Screen
   (show [_ context]
     (.setInputProcessor Gdx/input stage)
     (when sub-screen (screen/show sub-screen context)))
+
   (hide [_ context]
     (.setInputProcessor Gdx/input nil)
     (when sub-screen (screen/hide sub-screen context)))
+
   (render [_ context]
     (when sub-screen (screen/render sub-screen context))
     (.draw stage))
+
   (tick [_ context delta]
     (when sub-screen (screen/tick sub-screen context delta))
     (.act stage delta)))

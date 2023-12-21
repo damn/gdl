@@ -1,4 +1,4 @@
-(ns gdl.context.assets
+(ns gdl.backends.libgdx.context.assets
   (:require [clojure.string :as str]
             gdl.context)
   (:import com.badlogic.gdx.Gdx

@@ -22,7 +22,7 @@
             [lein-hiera "2.0.0"]]
   :codox {:source-uri "https://github.com/damn/gdl/blob/main/{filepath}#L{line}"}
   :global-vars {*warn-on-reflection* true}
-  :aliases {"dev" ["run" "-m" "gdl.dev" "gdl.simple-test" "app"]})
+  :aliases {"dev" ["run" "-m" "gdl.backends.libgdx.dev" "gdl.simple-test" "app"]})
 
 ;; TODO dev
 ; - clojure.pprint => https://github.com/AbhinavOmprakash/snitch

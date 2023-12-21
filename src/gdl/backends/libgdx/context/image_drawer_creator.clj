@@ -1,4 +1,4 @@
-(ns gdl.context.image-drawer-creator
+(ns gdl.backends.libgdx.context.image-drawer-creator
   (:require gdl.context)
   (:import (com.badlogic.gdx.graphics Color Texture)
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))

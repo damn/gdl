@@ -1,4 +1,4 @@
-(ns gdl.context.shape-drawer
+(ns gdl.backends.libgdx.context.shape-drawer
   (:require gdl.context)
   (:import (com.badlogic.gdx.graphics Color Texture Pixmap Pixmap$Format)
            com.badlogic.gdx.graphics.g2d.TextureRegion
