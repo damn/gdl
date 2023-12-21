@@ -1,8 +1,3 @@
-; TODO make 2 = gui-view & world-view ?
-; which has view interface ....
-; I don't need in my test world-view & I don't need scene2d.ui
-; => default-modules move to test
-; => tree structure
 (ns gdl.context.gui-world-views
   (:require gdl.context)
   (:import com.badlogic.gdx.Gdx
@@ -10,6 +5,11 @@
            com.badlogic.gdx.graphics.g2d.Batch
            (com.badlogic.gdx.utils.viewport Viewport FitViewport)
            (com.badlogic.gdx.math Vector2 MathUtils)))
+
+(def ^:private gui-unit-scale 1)
+
+(defn- screen-width  [] (.getWidth  Gdx/graphics))
+(defn- screen-height [] (.getHeight Gdx/graphics))
 
 (defn- clamp [value min max]
   (MathUtils/clamp (float value) (float min) (float max)))
@@ -38,39 +38,37 @@
                                      :gui gui-camera
                                      :world world-camera)
         unit-scale (case gui-or-world
-                     :gui 1
-                     :world world-unit-scale)
-        context (assoc context :unit-scale unit-scale)]
+                     :gui gui-unit-scale
+                     :world world-unit-scale)]
     (.setColor batch Color/WHITE) ; fix scene2d.ui.tooltip flickering
     (.setProjectionMatrix batch (.combined camera))
     (.begin batch)
-    (gdl.context/with-shape-line-width context
+    (gdl.context/with-shape-line-width
+      context
       unit-scale
-      #(draw-fn context))
+      #(draw-fn (assoc context :unit-scale unit-scale)))
     (.end batch)))
+
+(defn update-viewports [{:keys [gui-viewport world-viewport]} w h]
+  (.update ^Viewport gui-viewport w h true)
+  ; Do not center the camera on world-viewport. We set the position there manually.
+  (.update ^Viewport world-viewport w h false))
+
+(defn- viewport-fix-required? [{:keys [^Viewport gui-viewport]}]
+  (or (not= (.getScreenWidth  gui-viewport) (screen-width))
+      (not= (.getScreenHeight gui-viewport) (screen-height))))
+
+; TODO on mac osx, when resizing window, make bug report /  fix it in libgdx?
+(defn fix-viewport-update
+  "Sometimes the viewport update is not triggered."
+  [context]
+  (when (viewport-fix-required? context)
+    (update-viewports context (screen-width) (screen-height))))
 
 (extend-type gdl.context.Context
   gdl.context/GuiWorldViews
-  (render-gui-view [this render-fn]
-    (render-view this :gui render-fn))
-
-  (render-world-view [this render-fn]
-    (render-view this :world render-fn))
-
-  (update-viewports [{:keys [gui-viewport world-viewport]} w h]
-    (.update ^Viewport gui-viewport   w h true)
-    ; Do not center the camera on world-viewport. We set the position there manually.
-    (.update ^Viewport world-viewport w h false))
-
-  ; "Sometimes the viewport update is not triggered."
-  ; TODO (on mac osx, when resizing window, make bug report, fix it in libgdx?)
-  (fix-viewport-update
-    [{:keys [^Viewport gui-viewport] :as context}]
-    (let [screen-width  (.getWidth  Gdx/graphics)
-          screen-height (.getHeight Gdx/graphics)]
-      (when-not (and (= (.getScreenWidth  gui-viewport) screen-width)
-                     (= (.getScreenHeight gui-viewport) screen-height))
-        (gdl.context/update-viewports context screen-width screen-height))))
+  (render-gui-view   [this render-fn] (render-view this :gui   render-fn))
+  (render-world-view [this render-fn] (render-view this :world render-fn))
 
   (gui-mouse-position [{:keys [gui-viewport]}]
     ; TODO mapv int needed?
@@ -84,20 +82,18 @@
   (pixels->world-units [{:keys [world-unit-scale]} pixels]
     (* pixels world-unit-scale)))
 
-(defn ->context [& {:keys [tile-size]}]
-  (merge {:unit-scale 1} ;  TODO not here ? only used @ gui drawings without render-view in 2 widgets .... ? or part of gui
+(defn ->context [world-unit-scale]
+  {:pre [(number? world-unit-scale)]}
+  (merge {:unit-scale gui-unit-scale} ; only here because actors want to use drawing without using render-gui-view
          (let [gui-camera (OrthographicCamera.)
-               gui-viewport (FitViewport. (.getWidth  Gdx/graphics)
-                                          (.getHeight Gdx/graphics)
-                                          gui-camera)]
+               gui-viewport (FitViewport. (screen-width) (screen-height) gui-camera)]
            {:gui-camera   gui-camera
             :gui-viewport gui-viewport
             :gui-viewport-width  (.getWorldWidth  gui-viewport)
             :gui-viewport-height (.getWorldHeight gui-viewport)})
          (let [world-camera (OrthographicCamera.)
-               world-unit-scale (/ (or tile-size 1))
-               world-viewport (let [width  (* (.getWidth Gdx/graphics) world-unit-scale)
-                                    height (* (.getHeight Gdx/graphics) world-unit-scale)
+               world-viewport (let [width  (* (screen-width) world-unit-scale)
+                                    height (* (screen-height) world-unit-scale)
                                     y-down? false]
                                 (.setToOrtho world-camera y-down? width height)
                                 (FitViewport. width height world-camera))]

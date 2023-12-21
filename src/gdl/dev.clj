@@ -53,7 +53,6 @@
     (println "\n\n>>> RESTARTING <<<")
     (.notify obj)))
 
-
 (declare ^:private refresh-result)
 
 (defn ^:no-doc dev-loop []

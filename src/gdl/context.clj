@@ -8,7 +8,7 @@
                  "Calls screen/hide on the current-screen (if there is one).
                  Throws AssertionError when the context does not have a new-screen.
                  Calls screen/show on the new screen and
-                 returns the context with current-screen to new-screen."))
+                 returns the context with current-screen set to new-screen."))
 
 (defprotocol TrueTypeFontGenerator
   (generate-ttf [_ {:keys [file size]}]))
@@ -48,12 +48,21 @@
   (render-world-view [_ render-fn])
   (pixels->world-units [_ pixels])
   (gui-mouse-position [_])
-  (world-mouse-position [_])
-
-  ; use in gdl.app only TODO
-  (update-viewports [_ w h])
-  (fix-viewport-update [_]))
+  (world-mouse-position [_]))
 
 (defprotocol SoundStore
   (play-sound! [_ file]
                "Sound is already loaded from file, this will perform only a lookup for the sound and play it." ))
+
+(defprotocol Stage
+  (->stage-screen [_ {:keys [stage sub-screen]}]
+                  "A screen with a stage as an input-processor which gets drawn and 'act'ed and disposed.
+                  The sub-screen is rendered and tick'ed before the stage.
+                  Sub-screen is optional.")
+  (get-stage [_])
+  (mouse-on-stage-actor? [_]))
+
+(defprotocol Widgets
+  (->text-button [_ text on-clicked])
+  (->check-box [_ text on-clicked checked?])
+  (->image-button [_ image on-clicked]))

@@ -1,15 +1,14 @@
 (ns gdl.scene2d.ui
   "Widget constructors and helper functions for com.kotcrab.vis.ui
   See: https://github.com/kotcrab/vis-ui"
-  (:require gdl.context
-            [gdl.scene2d.actor :as actor])
+  (:require [gdl.scene2d.actor :as actor])
   (:import com.badlogic.gdx.files.FileHandle
            com.badlogic.gdx.graphics.g2d.TextureRegion
            com.badlogic.gdx.scenes.scene2d.Actor
-           (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
-           (com.badlogic.gdx.scenes.scene2d.ui Skin Cell Table WidgetGroup TextButton CheckBox Window Button
+           (com.badlogic.gdx.scenes.scene2d.utils TextureRegionDrawable Drawable)
+           (com.badlogic.gdx.scenes.scene2d.ui Skin Cell Table WidgetGroup Window
             Label TooltipManager Tooltip TextTooltip TextField SplitPane Stack Image)
-           (com.kotcrab.vis.ui.widget VisTextField VisTable VisTextButton VisImageButton VisWindow VisLabel VisSplitPane VisCheckBox)))
+           (com.kotcrab.vis.ui.widget VisTextField VisTable VisWindow VisLabel VisSplitPane )))
 
 (defn set-cell-opts [^Cell cell opts]
   (doseq [[option arg] opts]
@@ -50,34 +49,7 @@
   (-> (VisTable.)
       (set-opts opts)))
 
-(defn text-button ^TextButton [text on-clicked]
-  (let [button (VisTextButton. ^String text)]
-    (.addListener button
-                  (proxy [ChangeListener] []
-                    (changed [event actor]
-                      (on-clicked))))
-    button))
-
-(defn check-box ^CheckBox [text on-clicked checked?]
-  (let [^Button button (VisCheckBox. ^String text)]
-    (.setChecked button checked?)
-    (.addListener button
-                  (proxy [ChangeListener] []
-                    (changed [event ^Button actor]
-                      (on-clicked (.isChecked actor)))))
-    button))
-
-; TODO give directly texture-region
-; TODO check how to make toggle-able ? with hotkeys for actionbar trigger ?
-(defn image-button ^VisImageButton [image on-clicked]
-  (let [button (VisImageButton. (TextureRegionDrawable. ^TextureRegion (:texture image)))]
-    (.addListener button
-                  (proxy [ChangeListener] []
-                    (changed [event actor]
-                      (on-clicked))))
-    button))
-
-(defn- add-window-close-button [^Window window]
+#_(defn- add-window-close-button [^Window window]
   (.add (.getTitleTable window)
         (text-button "x" #(.setVisible window false)))
   window)
@@ -86,7 +58,9 @@
   (-> (doto (VisWindow. ^String title)
         (.setModal (boolean modal?)))
       (set-opts opts)
-      add-window-close-button))
+      #_add-window-close-button
+
+      ))
 
 (defn label ^Label [text]
   (VisLabel. ^CharSequence text))
