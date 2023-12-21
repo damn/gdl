@@ -1,4 +1,5 @@
-(ns gdl.input.keys)
+(ns gdl.input.keys
+  (:refer-clojure :exclude [num]))
 
 (declare a
          alt-left

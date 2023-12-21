@@ -7,6 +7,9 @@
 
 (extend-type gdl.context.Context
   gdl.context/Graphics
+  (delta-time [_]
+    (.getDeltaTime Gdx/graphics))
+
   (frames-per-second [_]
     (.getFramesPerSecond Gdx/graphics)))
 

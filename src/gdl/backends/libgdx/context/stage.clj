@@ -1,5 +1,5 @@
 (ns gdl.backends.libgdx.context.stage
-  (:require [gdl.context :refer [gui-mouse-position current-screen get-stage]]
+  (:require [gdl.context :refer [gui-mouse-position current-screen get-stage delta-time]]
             gdl.disposable
             [gdl.screen :as screen]
             [gdl.scene2d.actor :as actor])
@@ -22,11 +22,8 @@
 
   (render [_ context]
     (when sub-screen (screen/render sub-screen context))
-    (.draw stage))
-
-  (tick [_ context delta]
-    (when sub-screen (screen/tick sub-screen context delta))
-    (.act stage delta)))
+    (.draw stage)
+    (.act stage (delta-time context))))
 
 (defn- find-actor-with-id [^Stage stage id]
   (let [actors (.getActors stage)

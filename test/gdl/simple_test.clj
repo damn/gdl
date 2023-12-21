@@ -27,8 +27,7 @@
   (show [_ _context])
   (hide [_ _context])
   (render [_ context]
-    (render-gui-view context draw-test))
-  (tick [_ _context _delta]))
+    (render-gui-view context draw-test)))
 
 (defn create-context [context]
   (assoc context

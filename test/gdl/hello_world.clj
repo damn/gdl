@@ -11,8 +11,7 @@
   (show [_ _context])
   (hide [_ _context])
   (render [_ context]
-    (render-gui-view context draw))
-  (tick [_ _context _delta]))
+    (render-gui-view context draw)))
 
 (defn create-context [default-context]
   (assoc default-context ::my-screen (->MyScreen)))

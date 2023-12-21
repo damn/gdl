@@ -77,11 +77,9 @@
 
     (render []
       (ScreenUtils/clear color/black)
-      (let [context @current-context
-            screen (current-screen context)]
+      (let [context @current-context]
         (views/fix-viewport-update context)
-        (screen/render screen context)
-        (screen/tick screen context (* (.getDeltaTime Gdx/graphics) 1000))))
+        (screen/render (current-screen context) context)))
 
     (resize [w h]
       (views/update-viewports @current-context w h))))

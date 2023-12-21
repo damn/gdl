@@ -41,10 +41,3 @@ Add the following to your project.clj file:
 # Games made with GDL
 
 * [Cyber Dungeon Quest](https://github.com/damn/Cyber-Dungeon-Quest)
-
-# Namespace dependency graph
-
-<p align="center">
-  <img src="https://github.com/damn/gdx/blob/main/namespaces.png"/>
-</p>
-
