@@ -1,28 +1,34 @@
 (ns gdl.backends.libgdx.app
-  (:require [gdl.backends.libgdx.context.assets :as assets]
-            [gdl.backends.libgdx.context.gui-world-views :as gui-world-views :refer [update-viewports fix-viewport-update]]
-            gdl.backends.libgdx.context.image-drawer-creator
-            [gdl.backends.libgdx.context.shape-drawer :as shape-drawer]
-            [gdl.backends.libgdx.context.sprite-batch :as sprite-batch]
-            gdl.backends.libgdx.context.stage
-            [gdl.backends.libgdx.context.text-drawer :as text-drawer]
-            gdl.backends.libgdx.context.ttf-generator
-            [gdl.backends.libgdx.context.vis-ui :as vis-ui]
-
+  (:require (gdl.backends.libgdx.context [assets :as assets]
+                                         graphics
+                                         [gui-world-views :as views]
+                                         image-drawer-creator
+                                         input
+                                         [shape-drawer :as shape-drawer]
+                                         [sprite-batch :as sprite-batch]
+                                         stage
+                                         [text-drawer :as text-drawer]
+                                         ttf-generator
+                                         [vis-ui :as vis-ui])
             [gdl.screen :as screen]
             gdl.disposable
-            [gdl.context :refer [current-screen change-screen]])
+            [gdl.context :refer [current-screen change-screen]]
+            [gdl.graphics.color :as color])
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
            (com.badlogic.gdx.backends.lwjgl3 Lwjgl3Application Lwjgl3ApplicationConfiguration)
-           com.badlogic.gdx.graphics.Color
            com.badlogic.gdx.utils.ScreenUtils))
+
+(extend-type gdl.context.Context
+  gdl.context/Application
+  (exit-app [_]
+    (.exit Gdx/app)))
 
 (defn- ->default-context [world-unit-scale]
   (let [context (sprite-batch/->context)]
     (-> context
         (merge (shape-drawer/->context context) ; requires batch
                (assets/->context)
-               (gui-world-views/->context (or world-unit-scale 1))
+               (views/->context (or world-unit-scale 1))
                (text-drawer/->context)
                (vis-ui/->context))
         gdl.context/map->Context)))
@@ -70,15 +76,15 @@
       (dispose-all @current-context))
 
     (render []
-      (ScreenUtils/clear Color/BLACK)
+      (ScreenUtils/clear color/black)
       (let [context @current-context
             screen (current-screen context)]
-        (fix-viewport-update context)
+        (views/fix-viewport-update context)
         (screen/render screen context)
         (screen/tick screen context (* (.getDeltaTime Gdx/graphics) 1000))))
 
     (resize [w h]
-      (update-viewports @current-context w h))))
+      (views/update-viewports @current-context w h))))
 
 (defn- lwjgl3-configuration [{:keys [title width height full-screen? fps]}]
   {:pre [title

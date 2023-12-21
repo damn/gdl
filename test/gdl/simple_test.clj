@@ -1,9 +1,9 @@
 (ns gdl.simple-test
-  (:require [gdl.app :as app]
+  (:require [gdl.backends.libgdx.app :as app]
             [gdl.context :refer [draw-centered-image draw-circle draw-text generate-ttf create-image render-gui-view
                                  gui-mouse-position world-mouse-position]]
-            gdl.screen)
-  (:import com.badlogic.gdx.graphics.Color))
+            gdl.screen
+            [gdl.graphics.color :as color]))
 
 (defn draw-test [{:keys [special-font logo] :as context}]
   (let [[wx wy] (map #(format "%.2f" %) (world-mouse-position context))
@@ -13,7 +13,7 @@
                      "GUI x " gx "\n"
                      "GUI y " gy "\n")]
     (draw-centered-image context logo [gx (+ gy 230)])
-    (draw-circle context [gx gy] 170 Color/WHITE)
+    (draw-circle context [gx gy] 170 color/white)
     (draw-text context
                {:text (str "default-font\n" the-str)
                 :x gx,:y gy,:h-align nil,:up? true})

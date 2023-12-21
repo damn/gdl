@@ -1,7 +1,8 @@
 (ns gdl.backends.libgdx.context.gui-world-views
-  (:require gdl.context)
+  (:require gdl.context
+            [gdl.graphics.color :as color])
   (:import com.badlogic.gdx.Gdx
-           (com.badlogic.gdx.graphics Color OrthographicCamera)
+           (com.badlogic.gdx.graphics OrthographicCamera)
            com.badlogic.gdx.graphics.g2d.Batch
            (com.badlogic.gdx.utils.viewport Viewport FitViewport)
            (com.badlogic.gdx.math Vector2 MathUtils)))
@@ -40,7 +41,7 @@
         unit-scale (case gui-or-world
                      :gui gui-unit-scale
                      :world world-unit-scale)]
-    (.setColor batch Color/WHITE) ; fix scene2d.ui.tooltip flickering
+    (.setColor batch color/white) ; fix scene2d.ui.tooltip flickering
     (.setProjectionMatrix batch (.combined camera))
     (.begin batch)
     (gdl.context/with-shape-line-width

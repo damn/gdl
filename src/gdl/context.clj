@@ -2,6 +2,9 @@
 
 (defrecord Context [])
 
+(defprotocol Application
+  (exit-app [_]))
+
 (defprotocol ApplicationScreens
   (current-screen [_])
   (change-screen [_ new-screen]
@@ -9,6 +12,15 @@
                  Throws AssertionError when the context does not have a new-screen.
                  Calls screen/show on the new screen and
                  returns the context with current-screen set to new-screen."))
+
+(defprotocol Graphics
+  (frames-per-second [_]))
+
+(defprotocol Input
+  (button-pressed?      [_ button])
+  (button-just-pressed? [_ button])
+  (key-pressed?      [_ k])
+  (key-just-pressed? [_ k]))
 
 (defprotocol TrueTypeFontGenerator
   (generate-ttf [_ {:keys [file size]}]))

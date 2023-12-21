@@ -1,5 +1,5 @@
 (ns gdl.hello-world
-  (:require [gdl.app :as app]
+  (:require [gdl.backends.libgdx.app :as app]
             [gdl.context :refer [render-gui-view draw-text]]
             [gdl.screen :refer [Screen]]))
 

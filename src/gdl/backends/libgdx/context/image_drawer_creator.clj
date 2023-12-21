@@ -1,6 +1,7 @@
 (ns gdl.backends.libgdx.context.image-drawer-creator
-  (:require gdl.context)
-  (:import (com.badlogic.gdx.graphics Color Texture)
+  (:require gdl.context
+            [gdl.graphics.color :as color])
+  (:import com.badlogic.gdx.graphics.Texture
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
 
 (defn- draw-texture [^Batch batch texture [x y] [w h] rotation color]
@@ -15,7 +16,7 @@
          1 ; scaling factor
          1
          rotation)
-  (if color (.setColor batch Color/WHITE)))
+  (if color (.setColor batch color/white)))
 
 ; TODO just make in image map of unit-scales to dimensions for each view
 ; and get by view key ?
