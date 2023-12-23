@@ -60,7 +60,6 @@
   (try (start-app)
        (catch Throwable t
          (p/pretty-pst t)
-         (println "app-start-failed")
          (reset! app-start-failed true)))
   (loop []
     (when-not @app-start-failed

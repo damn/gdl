@@ -1,5 +1,10 @@
 (ns gdl.backends.libgdx.app
-  (:require (gdl.backends.libgdx.context [assets :as assets]
+  (:require [gdl.app :refer [current-context]]
+            [gdl.screen :as screen]
+            gdl.disposable
+            [gdl.context :refer [current-screen change-screen]]
+            [gdl.graphics.color :as color]
+            (gdl.backends.libgdx.context [assets :as assets]
                                          graphics
                                          [gui-world-views :as views]
                                          image-drawer-creator
@@ -9,11 +14,7 @@
                                          stage
                                          [text-drawer :as text-drawer]
                                          ttf-generator
-                                         [vis-ui :as vis-ui])
-            [gdl.screen :as screen]
-            gdl.disposable
-            [gdl.context :refer [current-screen change-screen]]
-            [gdl.graphics.color :as color])
+                                         [vis-ui :as vis-ui]))
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
            (com.badlogic.gdx.backends.lwjgl3 Lwjgl3Application Lwjgl3ApplicationConfiguration)
            com.badlogic.gdx.utils.ScreenUtils))
@@ -59,15 +60,13 @@
       (screen/show screen new-context)
       new-context)))
 
-(def current-context (atom nil))
-
 (defn- ->application [{:keys [create-context
                               first-screen
                               world-unit-scale]}]
   (proxy [ApplicationAdapter] []
     (create []
       (let [context (-> (->default-context world-unit-scale)
-                        (assoc :gdl.backends.libgdx.app/current-context current-context)
+                        (assoc :gdl.app/current-context current-context)
                         create-context
                         (change-screen first-screen))]
         (reset! current-context context)))

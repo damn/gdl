@@ -33,9 +33,6 @@ import com.badlogic.gdx.maps.tiled.renderers.BatchTiledMapRenderer;
 
 import gdl.ColorSetter;
 
-// TODO include in libgdx directly ?
-// TODO document how ColorSetter works and can be used maybe with example
-// TODO just 'OrthogonalTiledMapRenderer'
 public class OrthogonalTiledMapRendererWithColorSetter extends BatchTiledMapRenderer {
 
   private ColorSetter colorSetter;

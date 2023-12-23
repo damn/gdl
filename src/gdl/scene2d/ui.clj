@@ -4,7 +4,7 @@
   (:require [gdl.scene2d.actor :as actor])
   (:import com.badlogic.gdx.files.FileHandle
            com.badlogic.gdx.graphics.g2d.TextureRegion
-           com.badlogic.gdx.scenes.scene2d.Actor
+           (com.badlogic.gdx.scenes.scene2d Actor Group)
            (com.badlogic.gdx.scenes.scene2d.utils TextureRegionDrawable Drawable)
            (com.badlogic.gdx.scenes.scene2d.ui Skin Cell Table WidgetGroup Window
             Label TooltipManager Tooltip TextTooltip TextField SplitPane Stack Image)
@@ -50,17 +50,19 @@
       (set-opts opts)))
 
 #_(defn- add-window-close-button [^Window window]
-  (.add (.getTitleTable window)
-        (text-button "x" #(.setVisible window false)))
-  window)
+    (.add (.getTitleTable window)
+          (text-button "x" #(.setVisible window false)))
+    window)
 
 (defn window ^Window [& {:keys [title modal?] :as opts}]
   (-> (doto (VisWindow. ^String title)
-        (.setModal (boolean modal?)))
-      (set-opts opts)
-      #_add-window-close-button
-
-      ))
+        (.setModal (boolean modal?))
+        ; closes nicely fades out, but removes from stage! not invisible
+        ; add option for property-editor to add add-close-button?/close-on-escape?
+        ;(.addCloseButton)
+        ;(.closeOnEscape)
+        )
+      (set-opts opts)))
 
 (defn label ^Label [text]
   (VisLabel. ^CharSequence text))
@@ -113,3 +115,12 @@
 
 (defn texture-region-drawable ^TextureRegionDrawable [^TextureRegion texture]
   (TextureRegionDrawable. texture))
+
+(defn find-actor-with-id [^Group group id]
+  (let [actors (.getChildren group)
+        ids (keep actor/id actors)]
+    (assert (or (empty? ids)
+                (apply distinct? ids))
+            (str "Actor ids are not distinct: " (vec ids)))
+    (first (filter #(= id (actor/id %))
+                   actors))))

@@ -41,7 +41,7 @@
 
 ; TODO add Actor/Widget, also using current-context & tooltips
 
-(defn- ->change-listener [{:keys [gdl.backends.libgdx.app/current-context]} on-clicked]
+(defn- ->change-listener [{:keys [gdl.app/current-context]} on-clicked]
   (proxy [ChangeListener] []
     (changed [event actor] ; TODO pass also event / actor as event/event event/actor or something
       (on-clicked @current-context))))
