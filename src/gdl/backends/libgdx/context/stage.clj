@@ -3,7 +3,7 @@
             gdl.disposable
             [gdl.screen :as screen]
             [gdl.scene2d.actor :as actor]
-            [gdl.scene2d.ui :refer [find-actor-with-id]])
+            [gdl.scene2d.group :refer [find-actor-with-id]])
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.scenes.scene2d.Stage))
 

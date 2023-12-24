@@ -20,7 +20,8 @@
     (draw-text context
                {:font special-font
                 :text (str "exl-font\n" the-str)
-                :x gx,:y gy,:h-align :left,:up? false})))
+                :x gx,:y gy,:h-align :left,:up? false
+                :scale 2})))
 
 (defrecord Screen []
   gdl.screen/Screen

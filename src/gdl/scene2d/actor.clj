@@ -1,29 +1,18 @@
-(ns gdl.scene2d.actor
-  "Helper functions for com.badlogic.gdx.scenes.scene2d.Actor
-  'id' is defined by using .getUserObject and .setUserObject in Actor class."
-  (:import (com.badlogic.gdx.scenes.scene2d Actor Touchable)))
+(ns gdl.scene2d.actor)
 
-(defn toggle-visible! [^Actor actor]
-  (.setVisible actor (not (.isVisible actor))))
-
-(defn id [^Actor actor]
-  (.getUserObject actor))
-
-(defn set-id [^Actor actor id]
-  (.setUserObject actor id))
-
-(defn set-center [^Actor actor x y]
-  (.setPosition actor
-                (- x (/ (.getWidth actor) 2))
-                (- y (/ (.getHeight actor) 2))))
-
-(defn set-touchable [^Actor actor touchable]
-  (.setTouchable actor (case touchable
-                         :children-only Touchable/childrenOnly
-                         :disabled      Touchable/disabled
-                         :enabled       Touchable/enabled)))
-
-(defn set-opts [actor {:keys [id]}]
-  (-> actor
-      (set-id id))
-  actor)
+(defprotocol Actor
+  (id [_])
+  (set-id! [_ id])
+  (visible? [_])
+  (set-visible! [_ bool])
+  (toggle-visible! [_])
+  (set-position! [_ x y])
+  (set-center! [_ x y])
+  (set-width! [_ width])
+  (set-height! [_ height])
+  (get-x [_])
+  (get-y [_])
+  (width [_])
+  (height [_])
+  (set-touchable! [_ touchable]
+                 ":children-only, :disabled or :enabled."))

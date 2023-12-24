@@ -1,26 +1,33 @@
 (ns gdl.backends.libgdx.context.vis-ui
-  (:require gdl.context
+  (:require [gdl.app :refer [current-context]]
+            gdl.context
             gdl.disposable
-            gdl.scene2d.ui)
+            [gdl.scene2d.actor :as actor]
+            gdl.scene2d.group
+            gdl.scene2d.ui.label
+            [gdl.scene2d.ui.table :refer [add-rows]]
+            gdl.scene2d.ui.cell)
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.graphics.g2d.TextureRegion
-           (com.badlogic.gdx.scenes.scene2d.ui Skin Button)
-           (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable)
+           (com.badlogic.gdx.scenes.scene2d Actor Group Touchable)
+           (com.badlogic.gdx.scenes.scene2d.ui Skin Button TooltipManager Tooltip TextTooltip Label Table Cell WidgetGroup Stack Image
+                                               ButtonGroup HorizontalGroup)
+           (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
-           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImageButton)))
+           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane)))
 
-(defn ->context [] ; TODO skin-scale arg
-  ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
-  (.bindRoot #'gdl.scene2d.ui/default-skin (Skin. (.internal Gdx/files "scene2d.ui.skin/uiskin.json")))
+(defn ->context []
   ; app crashes during startup before VisUI/dispose and we do clojure.tools.namespace.refresh-> gui elements not showing.
   ; => actually there is a deeper issue at play
   ; we need to dispose ALL resources which were loaded already ...
   (when (VisUI/isLoaded)
     (VisUI/dispose))
-  (VisUI/load #_VisUI$SkinScale/X2)
-  {:context/vis-ui (reify gdl.disposable/Disposable
+  (VisUI/load #_VisUI$SkinScale/X2) ; TODO skin-scale arg
+
+  ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
+  {:context.ui/default-skin (Skin. (.internal Gdx/files "scene2d.ui.skin/uiskin.json"))
+   :context/vis-ui (reify gdl.disposable/Disposable
                      (dispose [_]
-                       (.dispose ^Skin gdl.scene2d.ui/default-skin)
                        (VisUI/dispose)))})
 
 (comment
@@ -39,17 +46,79 @@
    ; }
    ))
 
-; TODO add Actor/Widget, also using current-context & tooltips
-
-(defn- ->change-listener [{:keys [gdl.app/current-context]} on-clicked]
+; this could do (swap! current-context on-clicked)
+; & enter/hide pure & render returning a context also...
+(defn- ->change-listener [_ on-clicked]
   (proxy [ChangeListener] []
-    (changed [event actor] ; TODO pass also event / actor as event/event event/actor or something
+    (changed [event actor]
       (on-clicked @current-context))))
-; TODO this could do (swap! current-context on-clicked) ??
-; => all change-screens could be done pure functions o.o / hide / enter 'pure' functions
+
+; TODO the tooltip manager sets my spritebatch color to 0.2 alpha for short time
+; TODO also the widget where the tooltip is attached is flickering after
+; the tooltip disappears
+; => write your own manager without animations/time
+(defn- instant-show-tooltip-manager ^TooltipManager [textfn]
+  (let [manager (proxy [TooltipManager] []
+                  (enter [^Tooltip tooltip]
+                    (.setText ^Label (.getActor tooltip) ^String (textfn @current-context))
+                    (.pack (.getContainer tooltip))
+                    (let [^TooltipManager this this]
+                      (proxy-super enter tooltip))))]
+    (set! (.initialTime manager) 0)
+    (set! (.resetTime   manager) 0)
+    (set! (.animations  manager) false)
+    (.hideAll manager)
+    manager))
+
+(defn- set-cell-opts [^Cell cell opts]
+  (doseq [[option arg] opts]
+    (case option
+      :expand?    (.expand    cell)
+      :bottom?    (.bottom    cell)
+      :colspan    (.colspan   cell (int arg))
+      :pad        (.pad       cell (float arg))
+      :pad-bottom (.padBottom cell (float arg)))))
+
+(defn- set-widget-group-opts [^WidgetGroup widget-group {:keys [fill-parent? pack?]}]
+  (.setFillParent widget-group (boolean fill-parent?))
+  (when pack?
+    (.pack widget-group))
+  widget-group)
+
+(defn- set-table-opts [^Table table {:keys [rows cell-defaults]}]
+  (set-cell-opts (.defaults table) cell-defaults)
+  (add-rows table rows))
+
+(defn- set-actor-opts [actor {:keys [id]}]
+  (-> actor (actor/set-id! id))
+  actor)
+
+(defn- set-opts [actor opts]
+  (set-actor-opts actor opts)
+  (when (instance? Table actor)       (set-table-opts        actor opts)) ; before widget-group-opts so pack is packing rows
+  (when (instance? WidgetGroup actor) (set-widget-group-opts actor opts))
+  actor)
+
+#_(defn- add-window-close-button [^Window window]
+    (.add (.getTitleTable window)
+          (text-button "x" #(.setVisible window false)))
+    window)
 
 (extend-type gdl.context.Context
   gdl.context/Widgets
+  (->actor [_ {:keys [draw act]}]
+    (proxy [Actor] []
+      (draw [_batch _parent-alpha]
+        (when draw
+          (draw @current-context)))
+      (act [delta]
+        (when act
+          (act @current-context)))))
+
+  (->group [_] (Group.))
+  (->horizontal-group [_] (HorizontalGroup.))
+  (->button-group [_] (ButtonGroup.))
+
   ; ^TextButton
   (->text-button [context text on-clicked]
     (let [button (VisTextButton. ^String text)]
@@ -72,4 +141,114 @@
   (->image-button [context image on-clicked]
     (let [button (VisImageButton. (TextureRegionDrawable. ^TextureRegion (:texture image)))]
       (.addListener button (->change-listener context on-clicked))
-      button)))
+      button))
+
+  ; TODO VisToolTip
+  ; https://github.com/kotcrab/vis-ui/wiki/Tooltips
+  (->text-tooltip ^TextTooltip [{:keys [context.ui/default-skin]} textfn]
+    (TextTooltip. "" (instant-show-tooltip-manager textfn) ^Skin default-skin))
+
+  (->table ^Table [_ opts]
+    (-> (VisTable.)
+        (set-opts opts)))
+
+  (->window ^Window [_ {:keys [title modal?] :as opts}]
+    (-> (doto (VisWindow. ^String title)
+          (.setModal (boolean modal?))
+          ; closes nicely fades out, but removes from stage! not invisible
+          ; add option for property-editor to add add-close-button?/close-on-escape?
+          ;(.addCloseButton)
+          ;(.closeOnEscape)
+          )
+        (set-opts opts)))
+
+  (->label ^Label [_ text]
+    (VisLabel. ^CharSequence text))
+
+  (->text-field ^VisTextField [_ ^String text opts]
+    (-> (VisTextField. text)
+        (set-opts opts)))
+
+  ; TODO is not decendend of SplitPane anymore => check all type hints here
+  (->split-pane ^VisSplitPane [_ {:keys [^Actor first-widget
+                                         ^Actor second-widget
+                                         ^Boolean vertical?] :as opts}]
+    (-> (VisSplitPane. first-widget second-widget vertical?)
+        (set-actor-opts opts)))
+
+  (->stack [_]
+    (Stack.))
+
+  ; TODO VisImage, check other widgets too replacements ?
+  (->image-widget ^Image [_ ^Drawable drawable opts]
+    (-> (Image. drawable)
+        (set-opts opts)))
+
+  ; => maybe with VisImage not necessary anymore?
+  (->texture-region-drawable ^TextureRegionDrawable [_ ^TextureRegion texture]
+    (TextureRegionDrawable. texture)))
+
+(extend-type Cell
+  gdl.scene2d.ui.cell/Cell
+  (set-actor! [cell actor]
+    (.setActor cell actor)))
+
+(extend-type Table
+  gdl.scene2d.ui.table/Table
+  (cells [table]
+    (.getCells table))
+
+  (add-rows [table rows]
+    (doseq [row rows]
+      (doseq [props-or-actor row]
+        (if (map? props-or-actor)
+          (-> (.add table ^Actor (:actor props-or-actor))
+              (set-cell-opts (dissoc props-or-actor :actor)))
+          (.add table ^Actor props-or-actor)))
+      (.row table))
+    table))
+
+(extend-type Label
+  gdl.scene2d.ui.label/Label
+  (set-text! [^Label label ^CharSequence text]
+    (.setText label text)))
+
+; => extend them with ilookup your groups
+(extend-type Group
+  gdl.scene2d.group/Group
+  (children [group]
+    (seq (.getChildren group)))
+
+  (find-actor-with-id [^Group group id]
+    (let [actors (.getChildren group)
+          ids (keep actor/id actors)]
+      (assert (or (empty? ids)
+                  (apply distinct? ids))
+              (str "Actor ids are not distinct: " (vec ids)))
+      (first (filter #(= id (actor/id %))
+                     actors)))))
+
+(extend-type Actor
+  gdl.scene2d.actor/Actor
+  (id [^Actor actor] (.getUserObject actor))
+  (set-id! [^Actor actor id] (.setUserObject actor id))
+  (visible? [actor] (.isVisible actor))
+  (set-visible! [actor bool] (.setVisible actor bool))
+  (toggle-visible! [^Actor actor]
+    (.setVisible actor (not (.isVisible actor))))
+  (set-position [actor x y] (.setPosition actor x y))
+  (set-center! [^Actor actor x y]
+    (.setPosition actor
+                  (- x (/ (.getWidth actor) 2))
+                  (- y (/ (.getHeight actor) 2))))
+  (set-width! [actor width] (.setWidth actor width))
+  (set-height! [actor height] (.setHeight actor height))
+  (get-x [actor] (.getY actor))
+  (get-y [actor] (.getX actor))
+  (width [actor] (.getWidth actor))
+  (height [actor] (.getHeight actor))
+  (set-touchable! [^Actor actor touchable]
+    (.setTouchable actor (case touchable
+                           :children-only Touchable/childrenOnly
+                           :disabled      Touchable/disabled
+                           :enabled       Touchable/enabled))))

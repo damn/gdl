@@ -12,11 +12,11 @@
 
 (extend-type gdl.context.Context
   gdl.context/TextDrawer
-  (draw-text [{:keys [default-font unit-scale batch]} {:keys [font text x y h-align up?]}]
+  (draw-text [{:keys [default-font unit-scale batch]} {:keys [x y text font h-align up? scale]}]
     (let [^BitmapFont font (or font default-font)
           data (.getData font)
           old-scale (.scaleX data)]
-      (.setScale data (float (* old-scale unit-scale)))
+      (.setScale data (float (* old-scale unit-scale (or scale 1))))
       (.draw font
              batch
              (str text)

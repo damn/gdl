@@ -66,7 +66,6 @@
   (proxy [ApplicationAdapter] []
     (create []
       (let [context (-> (->default-context world-unit-scale)
-                        (assoc :gdl.app/current-context current-context)
                         create-context
                         (change-screen first-screen))]
         (reset! current-context context)))

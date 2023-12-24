@@ -15,7 +15,10 @@
 
 (defprotocol Graphics
   (delta-time [_] "the time span between the current frame and the last frame in seconds.")
-  (frames-per-second [_] "the average number of frames per second"))
+  (frames-per-second [_] "the average number of frames per second")
+  (->cursor [_ file] "needs to be disposed (add to main context level)")
+  (set-cursor! [_ cursor])
+  (->color [_ r g b a]))
 
 (defprotocol Input
   (button-pressed?      [_ button])
@@ -27,7 +30,11 @@
   (generate-ttf [_ {:keys [file size]}]))
 
 (defprotocol TextDrawer
-  (draw-text [_ {:keys [font text x y h-align up?]}]))
+  (draw-text [_ {:keys [x y text font h-align up? scale]}]
+             "font, h-align, up? and scale are optional.
+             h-align one of: :center, :left, :right. Default :center.
+             up? renders the font over y, otherwise under.
+             scale will multiply the drawn text size with the scale."))
 
 (defprotocol ShapeDrawer
   (draw-ellipse [_ position radius-x radius-y color])
@@ -76,6 +83,21 @@
   (mouse-on-stage-actor? [_]))
 
 (defprotocol Widgets
+  (->actor [_ {:keys [draw act]}])
+  (->group [_])
   (->text-button [_ text on-clicked])
   (->check-box [_ text on-clicked checked?])
-  (->image-button [_ image on-clicked]))
+  (->image-button [_ image on-clicked])
+  (->text-tooltip [_ textfn])
+  (->table [_ opts])
+  (->window [_ {:keys [title modal?] :as opts}])
+  (->label [_ text])
+  (->text-field [_ text opts])
+  (->split-pane [_ {:keys [first-widget
+                           second-widget
+                           vertical?] :as opts}])
+  (->stack [_])
+  (->image-widget [_ drawable opts])
+  (->texture-region-drawable [_ texture-region])
+  (->horizontal-group [_])
+  (->button-group [_]))

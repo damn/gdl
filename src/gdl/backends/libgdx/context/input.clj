@@ -13,5 +13,8 @@
   (key-pressed?      [_ k] (.isKeyPressed     Gdx/input k))
   (key-just-pressed? [_ k] (.isKeyJustPressed Gdx/input k)))
 
+; TODO FIXME with namespace refresh and using the input.keys they can be not bound yet
+; -> namespace dependency tree not working with bind-roots ? do it different?
+; for example creating them manually with the right key code in gdl.input.*
 (bind-roots "com.badlogic.gdx.Input$Keys"    'int "gdl.input.keys")
 (bind-roots "com.badlogic.gdx.Input$Buttons" 'int "gdl.input.buttons")
