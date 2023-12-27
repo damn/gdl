@@ -1,19 +1,7 @@
 (ns gdl.maps.tiled
   "Convinience API for the com.badlogic.gdx.maps.tiled classes."
-  (:import com.badlogic.gdx.graphics.OrthographicCamera
-           [com.badlogic.gdx.maps MapRenderer MapLayer MapLayers MapProperties]
-           [com.badlogic.gdx.maps.tiled TmxMapLoader TiledMap TiledMapTile
-            TiledMapTileLayer TiledMapTileLayer$Cell]
-           ; TODO move java sources & packages in tiled/...
-           [gdl OrthogonalTiledMapRendererWithColorSetter ColorSetter]))
-
-(defn load-map
-  "Requires OpenGL context (texture generation)."
-  [file]
-  (.load (TmxMapLoader.) file))
-
-(defn dispose [^TiledMap tiled-map]
-  (.dispose tiled-map))
+  (:import [com.badlogic.gdx.maps MapLayer MapLayers MapProperties]
+           [com.badlogic.gdx.maps.tiled TiledMap TiledMapTile TiledMapTileLayer TiledMapTileLayer$Cell]))
 
 ; TODO this is actually get-properties for no reflection
 
@@ -46,7 +34,7 @@
     (when-not (= -1 idx)
       idx)))
 
-(defn- get-layer [tiled-map layer-name]
+(defn get-layer [tiled-map layer-name]
   (.get (layers tiled-map) ^String layer-name))
 
 (defn remove-layer! [tiled-map layer]
@@ -96,29 +84,3 @@
 #_(defn properties [obj]
     (let [^MapProperties ps (.getProperties obj)]
       (zipmap (map keyword (.getKeys ps)) (.getValues ps))))
-
-; OrthogonalTiledMapRenderer extends BatchTiledMapRenderer
-; and when a batch is passed to the constructor
-; we do not need to dispose the renderer
-(defn- map-renderer-for [{:keys [batch world-unit-scale]}
-                         tiled-map
-                         color-setter]
-  (OrthogonalTiledMapRendererWithColorSetter. tiled-map
-                                              (float world-unit-scale)
-                                              batch
-                                              (reify ColorSetter
-                                                (apply [_ color x y]
-                                                  (color-setter color x y)))))
-
-(def ^:private cached-map-renderer (memoize map-renderer-for))
-
-(defn render-map [{:keys [world-camera] :as context} tiled-map color-setter]
-  (let [^MapRenderer map-renderer (cached-map-renderer context tiled-map color-setter)]
-    (.update ^OrthographicCamera world-camera)
-    (.setView map-renderer world-camera)
-    (->> tiled-map
-         layers
-         (filter #(.isVisible ^MapLayer %))
-         (map (partial layer-index tiled-map))
-         int-array
-         (.render map-renderer))))

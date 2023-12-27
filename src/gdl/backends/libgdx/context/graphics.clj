@@ -14,11 +14,13 @@
     (.getFramesPerSecond Gdx/graphics))
 
   ; https://libgdx.com/wiki/input/cursor-visibility-and-catching
-  (->cursor [_ file]
-    (.newCursor Gdx/graphics
-                (Pixmap. (.internal Gdx/files file))
-                0
-                0))
+  (->cursor [{:keys [context/disposables]} file hotspot-x hotspot-y]
+    (let [cursor (.newCursor Gdx/graphics
+                             (Pixmap. (.internal Gdx/files file))
+                             hotspot-x
+                             hotspot-y)]
+      (swap! disposables conj cursor)
+      cursor))
 
   (set-cursor! [_ cursor]
     (.setCursor Gdx/graphics cursor))

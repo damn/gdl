@@ -4,17 +4,19 @@
             gdl.disposable
             [gdl.scene2d.actor :as actor]
             gdl.scene2d.group
+            gdl.scene2d.ui.button-group
             gdl.scene2d.ui.label
             [gdl.scene2d.ui.table :refer [add-rows]]
-            gdl.scene2d.ui.cell)
+            gdl.scene2d.ui.cell
+            gdl.scene2d.ui.widget-group
+            gdl.backends.libgdx.context.image-drawer-creator)
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.graphics.g2d.TextureRegion
            (com.badlogic.gdx.scenes.scene2d Actor Group Touchable)
-           (com.badlogic.gdx.scenes.scene2d.ui Skin Button TooltipManager Tooltip TextTooltip Label Table Cell WidgetGroup Stack Image
-                                               ButtonGroup HorizontalGroup)
+           (com.badlogic.gdx.scenes.scene2d.ui Skin Button TooltipManager Tooltip TextTooltip Label Table Cell WidgetGroup Stack ButtonGroup HorizontalGroup)
            (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
-           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane)))
+           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImage VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane)))
 
 (defn ->context []
   ; app crashes during startup before VisUI/dispose and we do clojure.tools.namespace.refresh-> gui elements not showing.
@@ -80,7 +82,7 @@
       :pad-bottom (.padBottom cell (float arg)))))
 
 (defn- set-widget-group-opts [^WidgetGroup widget-group {:keys [fill-parent? pack?]}]
-  (.setFillParent widget-group (boolean fill-parent?))
+  (.setFillParent widget-group (boolean fill-parent?)) ; <- actor? TODO
   (when pack?
     (.pack widget-group))
   widget-group)
@@ -104,6 +106,24 @@
           (text-button "x" #(.setVisible window false)))
     window)
 
+(defn- find-actor-with-id [^Group group id]
+  (let [actors (.getChildren group)
+        ids (keep actor/id actors)]
+    (assert (or (empty? ids)
+                (apply distinct? ids)) ; TODO could check @ add
+            (str "Actor ids are not distinct: " (vec ids)))
+    (first (filter #(= id (actor/id %))
+                   actors))))
+
+(defmulti ^:private ->vis-image type)
+
+(defmethod ->vis-image Drawable [^Drawable drawable]
+  (VisImage. drawable))
+
+(defmethod ->vis-image gdl.backends.libgdx.context.image_drawer_creator.Image
+  [{:keys [^TextureRegion texture]}]
+  (VisImage. texture))
+
 (extend-type gdl.context.Context
   gdl.context/Widgets
   (->actor [_ {:keys [draw act]}]
@@ -115,9 +135,27 @@
         (when act
           (act @current-context)))))
 
-  (->group [_] (Group.))
-  (->horizontal-group [_] (HorizontalGroup.))
-  (->button-group [_] (ButtonGroup.))
+  (->group [_]
+    (proxy [Group clojure.lang.ILookup] []
+      (valAt
+        ([id]
+         (find-actor-with-id this id))
+        ([id not-found]
+         (or (find-actor-with-id this id) not-found)))))
+
+  (->horizontal-group [_]
+    (proxy [HorizontalGroup clojure.lang.ILookup] []
+      (valAt
+        ([id]
+         (find-actor-with-id this id))
+        ([id not-found]
+         (or (find-actor-with-id this id) not-found)))))
+
+  (->button-group [_ {:keys [max-check-count min-check-count]}]
+    (let [button-group (ButtonGroup.)]
+      (.setMaxCheckCount button-group max-check-count)
+      (.setMinCheckCount button-group min-check-count)
+      button-group))
 
   ; ^TextButton
   (->text-button [context text on-clicked]
@@ -149,7 +187,12 @@
     (TextTooltip. "" (instant-show-tooltip-manager textfn) ^Skin default-skin))
 
   (->table ^Table [_ opts]
-    (-> (VisTable.)
+    (-> (proxy [VisTable clojure.lang.ILookup] []
+          (valAt
+            ([id]
+             (find-actor-with-id this id))
+            ([id not-found]
+             (or (find-actor-with-id this id) not-found))))
         (set-opts opts)))
 
   (->window ^Window [_ {:keys [title modal?] :as opts}]
@@ -176,12 +219,16 @@
     (-> (VisSplitPane. first-widget second-widget vertical?)
         (set-actor-opts opts)))
 
-  (->stack [_]
-    (Stack.))
+  (->stack [_ actors]
+    (proxy [Stack clojure.lang.ILookup] [(into-array Actor actors)]
+      (valAt
+        ([id]
+         (find-actor-with-id this id))
+        ([id not-found]
+         (or (find-actor-with-id this id) not-found)))))
 
-  ; TODO VisImage, check other widgets too replacements ?
-  (->image-widget ^Image [_ ^Drawable drawable opts]
-    (-> (Image. drawable)
+  (->image-widget [_ object opts]
+    (-> (->vis-image object)
         (set-opts opts)))
 
   ; => maybe with VisImage not necessary anymore?
@@ -206,38 +253,45 @@
               (set-cell-opts (dissoc props-or-actor :actor)))
           (.add table ^Actor props-or-actor)))
       (.row table))
-    table))
+    table)
+
+  (add! [table actor]
+    (.add table ^Actor actor))
+
+  (add-separator! [table]
+    (.addSeparator ^VisTable table)))
 
 (extend-type Label
   gdl.scene2d.ui.label/Label
   (set-text! [^Label label ^CharSequence text]
     (.setText label text)))
 
-; => extend them with ilookup your groups
 (extend-type Group
   gdl.scene2d.group/Group
   (children [group]
     (seq (.getChildren group)))
 
+  (clear-children! [group]
+    (.clearChildren group))
+
   (find-actor-with-id [^Group group id]
-    (let [actors (.getChildren group)
-          ids (keep actor/id actors)]
-      (assert (or (empty? ids)
-                  (apply distinct? ids))
-              (str "Actor ids are not distinct: " (vec ids)))
-      (first (filter #(= id (actor/id %))
-                     actors)))))
+    (find-actor-with-id group id))
+
+  (add-actor! [group actor]
+    (.addActor group actor)))
 
 (extend-type Actor
   gdl.scene2d.actor/Actor
-  (id [^Actor actor] (.getUserObject actor))
-  (set-id! [^Actor actor id] (.setUserObject actor id))
+  (id [actor] (.getUserObject actor))
+  (set-id! [actor id] (.setUserObject actor id))
+  (set-name! [actor name] (.setName actor name))
+  (actor-name [actor] (.getName actor))
   (visible? [actor] (.isVisible actor))
   (set-visible! [actor bool] (.setVisible actor bool))
-  (toggle-visible! [^Actor actor]
+  (toggle-visible! [actor]
     (.setVisible actor (not (.isVisible actor))))
-  (set-position [actor x y] (.setPosition actor x y))
-  (set-center! [^Actor actor x y]
+  (set-position! [actor x y] (.setPosition actor x y))
+  (set-center! [actor x y]
     (.setPosition actor
                   (- x (/ (.getWidth actor) 2))
                   (- y (/ (.getHeight actor) 2))))
@@ -247,8 +301,30 @@
   (get-y [actor] (.getX actor))
   (width [actor] (.getWidth actor))
   (height [actor] (.getHeight actor))
-  (set-touchable! [^Actor actor touchable]
+  (set-touchable! [actor touchable]
     (.setTouchable actor (case touchable
                            :children-only Touchable/childrenOnly
                            :disabled      Touchable/disabled
-                           :enabled       Touchable/enabled))))
+                           :enabled       Touchable/enabled)))
+  (add-listener! [actor listener]
+    (.addListener actor listener))
+  (remove! [actor]
+    (.remove actor))
+  (parent [actor]
+    (.getParent actor)))
+
+(extend-type ButtonGroup
+  gdl.scene2d.ui.button-group/ButtonGroup
+  (clear! [button-group]
+    (.clear button-group))
+  (add! [button-group button]
+    (.add button-group ^Button button))
+  (checked [button-group]
+    (.getChecked button-group))
+  (remove! [button-group button]
+    (.remove button-group ^Button button)))
+
+(extend-type WidgetGroup
+  gdl.scene2d.ui.widget-group/WidgetGroup
+  (pack! [group]
+    (.pack group)))

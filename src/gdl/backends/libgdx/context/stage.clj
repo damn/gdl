@@ -3,7 +3,7 @@
             gdl.disposable
             [gdl.screen :as screen]
             [gdl.scene2d.actor :as actor]
-            [gdl.scene2d.group :refer [find-actor-with-id]])
+            [gdl.scene2d.group :refer [find-actor-with-id] :as group])
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.scenes.scene2d.Stage))
 
@@ -22,9 +22,12 @@
     (when sub-screen (screen/hide sub-screen context)))
 
   (render [_ context]
+    ; stage act first so user screen calls change-screen -> is the end of frame
+    ; otherwise would need render-after-stage
+    ; or on change-screen the stage of the current screen would still .act
+    (.act stage (delta-time context))
     (when sub-screen (screen/render sub-screen context))
-    (.draw stage)
-    (.act stage (delta-time context))))
+    (.draw stage)))
 
 (extend-type gdl.context.Context
   gdl.context/Stage
@@ -44,3 +47,17 @@
   (mouse-on-stage-actor? [context]
     (let [[x y] (gui-mouse-position context)]
       (.hit ^Stage (get-stage context) x y true))))
+
+(extend-type Stage
+  gdl.scene2d.group/Group
+  (children [stage]
+    (group/children (.getRoot stage)))
+
+  (clear-children! [stage]
+    (group/clear-children! (.getRoot stage)))
+
+  (find-actor-with-id [stage id]
+    (group/find-actor-with-id (.getRoot stage) id))
+
+  (add-actor! [stage actor]
+    (group/add-actor! (.getRoot stage) actor)))

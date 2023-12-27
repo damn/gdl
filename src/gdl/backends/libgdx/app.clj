@@ -1,7 +1,7 @@
 (ns gdl.backends.libgdx.app
   (:require [gdl.app :refer [current-context]]
             [gdl.screen :as screen]
-            gdl.disposable
+            [gdl.disposable :refer [dispose]]
             [gdl.context :refer [current-screen change-screen]]
             [gdl.graphics.color :as color]
             (gdl.backends.libgdx.context [assets :as assets]
@@ -13,6 +13,7 @@
                                          [sprite-batch :as sprite-batch]
                                          stage
                                          [text-drawer :as text-drawer]
+                                         tiled
                                          ttf-generator
                                          [vis-ui :as vis-ui]))
   (:import (com.badlogic.gdx Gdx ApplicationAdapter)
@@ -31,7 +32,8 @@
                (assets/->context)
                (views/->context (or world-unit-scale 1))
                (text-drawer/->context)
-               (vis-ui/->context))
+               (vis-ui/->context)
+               {:context/disposables (atom #{})})
         gdl.context/map->Context)))
 
 (extend-type com.badlogic.gdx.utils.Disposable
@@ -44,7 +46,10 @@
           :when (some #(extends? gdl.disposable/Disposable %)
                       (supers (class value)))]
     ;(println "Disposing " k)
-    (gdl.disposable/dispose value)))
+    (dispose value))
+  (doseq [object @(:context/disposables context)]
+    ;(println "Disposing " object)
+    (dispose object)))
 
 (extend-type gdl.context.Context
   gdl.context/ApplicationScreens
