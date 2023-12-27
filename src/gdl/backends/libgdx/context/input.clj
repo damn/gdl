@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.input
+(ns ^:no-doc gdl.backends.libgdx.context.input
   (:require gdl.context
             gdl.input.keys
             gdl.input.buttons

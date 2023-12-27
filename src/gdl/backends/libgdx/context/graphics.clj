@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.graphics
+(ns ^:no-doc gdl.backends.libgdx.context.graphics
   (:require gdl.context
             [gdl.graphics.color :as color]
             [gdl.backends.libgdx.utils.reflect :refer [bind-roots]])

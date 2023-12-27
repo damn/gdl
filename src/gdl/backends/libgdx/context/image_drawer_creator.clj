@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.image-drawer-creator
+(ns ^:no-doc gdl.backends.libgdx.context.image-drawer-creator
   (:require gdl.context
             [gdl.graphics.color :as color])
   (:import com.badlogic.gdx.graphics.Texture

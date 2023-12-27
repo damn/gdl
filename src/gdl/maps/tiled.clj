@@ -1,7 +1,7 @@
 (ns gdl.maps.tiled
   (:import com.badlogic.gdx.maps.MapLayer))
 
-; implemented by: TiledMap, TiledMapTile, TiledMapTileLayer
+; implemented by: TiledMap, TiledMapTile, TiledMapTileLayer -> protocol docstring.
 (defprotocol HasProperties
   (properties [_] "Returns instance of com.badlogic.gdx.maps.MapProperties")
   ; just 'property' ?

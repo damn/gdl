@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.text-drawer
+(ns ^:no-doc gdl.backends.libgdx.context.text-drawer
   (:require [clojure.string :as str]
             gdl.context)
   (:import com.badlogic.gdx.graphics.g2d.BitmapFont

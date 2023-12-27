@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.vis-ui
+(ns ^:no-doc gdl.backends.libgdx.context.vis-ui
   (:require [gdl.app :refer [current-context]]
             gdl.context
             gdl.disposable

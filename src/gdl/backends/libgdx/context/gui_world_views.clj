@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.gui-world-views
+(ns ^:no-doc gdl.backends.libgdx.context.gui-world-views
   (:require gdl.context
             [gdl.graphics.color :as color])
   (:import com.badlogic.gdx.Gdx

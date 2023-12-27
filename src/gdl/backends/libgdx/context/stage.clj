@@ -1,4 +1,4 @@
-(ns gdl.backends.libgdx.context.stage
+(ns ^:no-doc gdl.backends.libgdx.context.stage
   (:require [gdl.context :refer [gui-mouse-position current-screen get-stage delta-time]]
             gdl.disposable
             [gdl.screen :as screen]
