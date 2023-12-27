@@ -1,86 +1,39 @@
 (ns gdl.maps.tiled
-  "Convinience API for the com.badlogic.gdx.maps.tiled classes."
-  (:import [com.badlogic.gdx.maps MapLayer MapLayers MapProperties]
-           [com.badlogic.gdx.maps.tiled TiledMap TiledMapTile TiledMapTileLayer TiledMapTileLayer$Cell]))
+  (:import com.badlogic.gdx.maps.MapLayer))
 
-; TODO this is actually get-properties for no reflection
+; implemented by: TiledMap, TiledMapTile, TiledMapTileLayer
+(defprotocol HasProperties
+  (properties [_] "Returns instance of com.badlogic.gdx.maps.MapProperties")
+  ; just 'property' ?
+  (get-property [_ key] "Pass keyword key, looks up in properties."))
 
-; TODO add interface HasMapProperties !!! then can just call that !
-
-(defmulti get-property (fn [obj k] (class obj)))
-
-(defmethod get-property TiledMap [^TiledMap tiled-map k]
-  (.get (.getProperties tiled-map) (name k)))
-
-(defmethod get-property TiledMapTile [^TiledMapTile tile k]
-  (.get (.getProperties tile) (name k)))
-
-(defmethod get-property TiledMapTileLayer [^MapLayer layer k]
-  (.get (.getProperties layer) (name k)))
-
-; TODO before var name or arglist put type hint?
-; https://clojure.org/reference/java_interop#typehints
-; "For function return values, the type hint can be placed before the arguments vector:"
-(defn ^MapLayers layers [tiled-map]
-  (.getLayers ^TiledMap tiled-map))
+(defprotocol TiledMap
+  (width [_])
+  (height [_])
+  (layers [_] "Returns instance of com.badlogic.gdx.maps.MapLayers of the tiledmap")
+  ; these 3 are actually MapLayers object, separate.=> wrong abstraction ?
+  (layer-index [_ layer]
+               "Returns nil or the integer index of the layer.
+               Layer can be keyword or an instance of TiledMapTileLayer.")
+  (get-layer [_ layer-name]
+             "Returns the layer with name (string).") ; keyword ?
+  (remove-layer! [_ layer]
+                 "Removes the layer, layer can be keyword or an actual layer object.")
+  ; cell is called on layer .. ? => wrong abstraction ?
+  (cell-at [_ layer position] "Layer can be keyword or layer object.
+                              Position vector [x y].
+                              If the layer is part of tiledmap, returns the TiledMapTileLayer$Cell at position.")
+  (property-value [_ layer position property-key]
+                  "Returns the property value of the tile at the cell in layer.
+                  If there is no cell at this position in the layer returns :no-cell.
+                  If the property value is undefined returns :undefined.
+                  Layer is keyword or layer object.")
+  (map-positions [_] "Returns a sequence of all [x y] positions in the tiledmap.")
+  (positions-with-property [_ layer property-key]
+                           "If the layer (keyword or layer object) does not exist returns nil.
+                           Otherwise returns a sequence of [[x y] value] for all tiles who have property-key."))
 
 (defn layer-name [layer]
   (if (keyword? layer)
     (name layer)
     (.getName ^MapLayer layer)))
-
-(defn layer-index [tiled-map layer]
-  (let [idx (.getIndex (layers tiled-map) ^String (layer-name layer))]
-    (when-not (= -1 idx)
-      idx)))
-
-(defn get-layer [tiled-map layer-name]
-  (.get (layers tiled-map) ^String layer-name))
-
-(defn remove-layer! [tiled-map layer]
-  (.remove (layers tiled-map)
-           ^Integer (layer-index tiled-map layer)))
-
-(defn ^TiledMapTileLayer$Cell cell-at [[x y] tiled-map layer]
-  (when-let [layer (get-layer tiled-map (layer-name layer))]
-    (.getCell ^TiledMapTileLayer layer x y)))
-
-; TODO we want cell property not tile property
-; so why care for no-cell ? just return nil
-
-(defn property-value
-  "Returns the property value from layer and position.
-  If there is no cell returns :no-cell and if the property value is undefined returns :undefined."
-  [position tiled-map layer property]
-  {:pre [(keyword? property)]}
-  (if-let [cell (cell-at position tiled-map layer)]
-    (if-let [value (get-property (.getTile cell) property)]
-      value
-      :undefined)
-    :no-cell))
-
-(defn width [tiled-map]
-  (get-property tiled-map :width))
-
-(defn height [tiled-map]
-  (get-property tiled-map :height))
-
-(defn- map-positions [tiled-map]
-  (for [x (range (width  tiled-map))
-        y (range (height tiled-map))]
-    [x y]))
-
-(defn positions-with-property [tiled-map layer property]
-  (when (layer-index tiled-map layer)
-    (for [position (map-positions tiled-map)
-          :let [[x y] position
-                value (property-value position tiled-map layer property)]
-          :when (not (#{:undefined :no-cell} value))]
-      [position value])))
-
-; reflection at .getProperties, but obj unknown (MapLayer or TileSet, ..)
-; => extend multi getProperties with this.. above. TODO
-; TODO slow => use directly get-property
-#_(defn properties [obj]
-    (let [^MapProperties ps (.getProperties obj)]
-      (zipmap (map keyword (.getKeys ps)) (.getValues ps))))
