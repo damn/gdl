@@ -109,7 +109,7 @@ Children added with add(Actor...) (and similar methods returning a Cell) are lai
 By default, Actor.getTouchable() is Touchable.childrenOnly.
 
 The preferred and minimum sizes are that of the children laid out in columns and rows.")
-  (->window [_ {:keys [title modal?] :as opts}])
+  (->window [_ {:keys [title modal? close-button? center?] :as opts}])
   (->label [_ text])
   (->text-field [_ text opts])
   (->split-pane [_ {:keys [first-widget
@@ -129,7 +129,7 @@ Children added with add(Actor...) (and similar methods returning a Cell) are lai
 By default, Actor.getTouchable() is Touchable.childrenOnly.
 
 The preferred and minimum sizes are that of the children laid out in columns and rows. ")
-  (->image-widget [_ object opts] "Takes either an image or drawable.")
+  (->image-widget [_ object opts] "Takes either an image or drawable. Opts are :scaling, :align and actor opts.")
   (->texture-region-drawable [_ texture-region])
   (->horizontal-group [_] "Implements clojure.lang.ILookup (get) on actor id.")
   (->button-group [_ {:keys [max-check-count min-check-count]}]))

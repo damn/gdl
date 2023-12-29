@@ -49,7 +49,6 @@
   (.get ^MapProperties (tiled/properties has-properties) (name key)))
 
 (extend-protocol gdl.maps.tiled/HasProperties
-  ; actually .getProperties is used at com.badlogic.gdx.maps.Map (more generic)
   TiledMap
   (properties [tiled-map] (.getProperties tiled-map))
   (get-property [tiled-map key] (lookup tiled-map key))
@@ -61,9 +60,6 @@
   TiledMapTile
   (properties [tile] (.getProperties tile))
   (get-property [tile key] (lookup tile key)))
-
-(comment
- [com.badlogic.gdx.maps.tiled TiledMapTileLayer ])
 
 (extend-type TiledMap
   gdl.maps.tiled/TiledMap

@@ -4,16 +4,19 @@
             gdl.disposable
             [gdl.scene2d.actor :as actor]
             gdl.scene2d.group
+            gdl.scene2d.ui.button
             gdl.scene2d.ui.button-group
             gdl.scene2d.ui.label
             [gdl.scene2d.ui.table :refer [add-rows]]
             gdl.scene2d.ui.cell
             gdl.scene2d.ui.widget-group
+            gdl.scene2d.ui.window
             gdl.backends.libgdx.context.image-drawer-creator)
   (:import com.badlogic.gdx.Gdx
            com.badlogic.gdx.graphics.g2d.TextureRegion
+           (com.badlogic.gdx.utils Align Scaling)
            (com.badlogic.gdx.scenes.scene2d Actor Group Touchable)
-           (com.badlogic.gdx.scenes.scene2d.ui Skin Button TooltipManager Tooltip TextTooltip Label Table Cell WidgetGroup Stack ButtonGroup HorizontalGroup)
+           (com.badlogic.gdx.scenes.scene2d.ui Skin Button TooltipManager Tooltip TextTooltip Label Table Cell WidgetGroup Stack ButtonGroup HorizontalGroup Window)
            (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
            (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImage VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane)))
@@ -25,6 +28,7 @@
   (when (VisUI/isLoaded)
     (VisUI/dispose))
   (VisUI/load #_VisUI$SkinScale/X2) ; TODO skin-scale arg
+  ; X2 everything too big .. need to change viewports for macbook ..
 
   ; this is the gdx default skin  - copied from libgdx project, check not included in libgdx jar somewhere?
   {:context.ui/default-skin (Skin. (.internal Gdx/files "scene2d.ui.skin/uiskin.json"))
@@ -72,6 +76,21 @@
     (.hideAll manager)
     manager))
 
+; listeners? for tooltip? but we have soon new tooltip so wait.
+; position ?
+(defn- set-actor-opts [actor {:keys [id name visible? touchable] :as opts}]
+  (when id   (actor/set-id!   actor id))
+  (when name (actor/set-name! actor name))
+  (when (contains? opts :visible?)  (actor/set-visible! actor visible?))
+  (when touchable (actor/set-touchable! actor touchable))
+  actor)
+
+; add opts
+; image-button
+; group (also elements)
+; stack
+
+; TODO docstrings for this !
 (defn- set-cell-opts [^Cell cell opts]
   (doseq [[option arg] opts]
     (case option
@@ -80,6 +99,13 @@
       :colspan    (.colspan   cell (int arg))
       :pad        (.pad       cell (float arg))
       :pad-bottom (.padBottom cell (float arg)))))
+
+(comment
+ ; fill parent & pack is from Widget TODO
+ com.badlogic.gdx.scenes.scene2d.ui.Widget
+ ; about .pack :
+ ; Generally this method should not be called in an actor's constructor because it calls Layout.layout(), which means a subclass would have layout() called before the subclass' constructor. Instead, in constructors simply set the actor's size to Layout.getPrefWidth() and Layout.getPrefHeight(). This allows the actor to have a size at construction time for more convenient use with groups that do not layout their children.
+ )
 
 (defn- set-widget-group-opts [^WidgetGroup widget-group {:keys [fill-parent? pack?]}]
   (.setFillParent widget-group (boolean fill-parent?)) ; <- actor? TODO
@@ -91,9 +117,6 @@
   (set-cell-opts (.defaults table) cell-defaults)
   (add-rows table rows))
 
-(defn- set-actor-opts [actor {:keys [id]}]
-  (-> actor (actor/set-id! id))
-  actor)
 
 (defn- set-opts [actor opts]
   (set-actor-opts actor opts)
@@ -131,7 +154,7 @@
       (draw [_batch _parent-alpha]
         (when draw
           (draw @current-context)))
-      (act [delta]
+      (act [_delta]
         (when act
           (act @current-context)))))
 
@@ -195,14 +218,12 @@
              (or (find-actor-with-id this id) not-found))))
         (set-opts opts)))
 
-  (->window ^Window [_ {:keys [title modal?] :as opts}]
-    (-> (doto (VisWindow. ^String title)
-          (.setModal (boolean modal?))
-          ; closes nicely fades out, but removes from stage! not invisible
-          ; add option for property-editor to add add-close-button?/close-on-escape?
-          ;(.addCloseButton)
-          ;(.closeOnEscape)
-          )
+  (->window ^Window [_ {:keys [title modal? close-button? center?] :as opts}]
+    (-> (let [window (doto (VisWindow. ^String title true) ; true = showWindowBorder
+                       (.setModal (boolean modal?)))]
+          (when close-button? (.addCloseButton window))
+          (when center? (.centerWindow window))
+          window)
         (set-opts opts)))
 
   (->label ^Label [_ text]
@@ -227,8 +248,13 @@
         ([id not-found]
          (or (find-actor-with-id this id) not-found)))))
 
-  (->image-widget [_ object opts]
-    (-> (->vis-image object)
+  ; TODO widget also make, for fill parent
+  (->image-widget [_ object {:keys [scaling align fill-parent?] :as opts}]
+    (-> (let [image (->vis-image object)]
+          (when (= :center align) (.setAlign image Align/center))
+          (when (= :fill scaling) (.setScaling image Scaling/fill))
+          (when fill-parent? (.setFillParent image true))
+          image)
         (set-opts opts)))
 
   ; => maybe with VisImage not necessary anymore?
@@ -285,9 +311,9 @@
   (id [actor] (.getUserObject actor))
   (set-id! [actor id] (.setUserObject actor id))
   (set-name! [actor name] (.setName actor name))
-  (actor-name [actor] (.getName actor))
+  (name [actor] (.getName actor))
   (visible? [actor] (.isVisible actor))
-  (set-visible! [actor bool] (.setVisible actor bool))
+  (set-visible! [actor bool] (.setVisible actor (boolean bool)))
   (toggle-visible! [actor]
     (.setVisible actor (not (.isVisible actor))))
   (set-position! [actor x y] (.setPosition actor x y))
@@ -328,3 +354,22 @@
   gdl.scene2d.ui.widget-group/WidgetGroup
   (pack! [group]
     (.pack group)))
+
+(defn- button-class? [actor]
+  (some #(= Button %) (supers (class actor))))
+
+(extend-type Actor
+  gdl.scene2d.ui.button/Actor
+  (button? [actor]
+    (or (button-class? actor)
+        (and (actor/parent actor)
+             (button-class? (actor/parent actor))))))
+
+(extend-type Actor
+  gdl.scene2d.ui.window/Actor
+  (window-title-bar? [actor]
+    (when (instance? Label actor)
+      (when-let [prnt (actor/parent actor)]
+        (when-let [prnt (actor/parent prnt)]
+          (and (instance? VisWindow prnt)
+               (= (.getTitleLabel ^Window prnt) actor)))))))
