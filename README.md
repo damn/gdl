@@ -4,7 +4,7 @@
 
 # What is GDL?
 
-The __vision__ of GDL is to be a __Game Development Language__ to make it _utterly simple_ to write games!
+The __vision__ of GDL is to be a __Game Development Language__ and make it _utterly simple_ to write games!
 
 GDL is a functional 2D game engine built around the idea of a __context__ object which holds the current state of the application.
 
@@ -37,12 +37,6 @@ The following things can be all called on the `context` object.
 * 🗺️Loading [tiled](https://www.mapeditor.org/) `.tmx` maps and drawing them with lights&shadows in `world-unit-scale`
 * 🖱️ Loading/setting cursors
 
-# Updating the context
-
-At the moment `render` does not return a new context object, as I am using `atom`s for my entities and state in the RPG project. 
-This proved to be quite useful and I am not sure it is possible to remove those `atom`s as they are used as references and save the lookup by entity `:id`.
-TODO: Still it might be useful for smaller projects to be able to just return a new `context` at the end of `render`. 
-
 # Hello World
 
 You can run the hello world example in this repository with:
@@ -61,6 +55,13 @@ You need to set this environment variable:
 export JVM_OPTS=-XstartOnFirstThread
 ```
 
+# Updating the context
+
+At the moment `render` does not return a new context object, as I am using `atom`s for my entities and state in the RPG project. 
+This proved to be quite useful and I am not sure it is possible to remove those `atom`s as they are used as references and save the lookup by entity `:id`.
+
+TODO: Still it might be useful for smaller projects to be able to just return a new `context` at the end of `render`.
+
 # Extending the `Context` for your game
 
 In [Cyber Dungeon Quest](https://github.com/damn/Cyber-Dungeon-Quest) I have defined more [game-specific context protocols](https://github.com/damn/Cyber-Dungeon-Quest/blob/master/src/cdq/context.clj). 
@@ -70,9 +71,6 @@ There is an example in [context.mouseover-entity](https://github.com/damn/Cyber-
 Basically you call `extend-type gdl.context.Context` with your protocols and merge the necessary context-data at app start with the existing default-context.
 
 By using namespaced keywords like `:context/mouseover-entity` and clojure's map destructuring it becomes quite __simple&easy__ to manage all the data in one object.
-
-The context returned by `render` will NOT update the original context. I am using `atoms` for my game entities, so it's not just one huge map but can use 
-
 
 # Installation
 
@@ -85,6 +83,8 @@ Add the following to your project.clj file:
 
 :dependencies [[com.github.damn/gdl "main-SNAPSHOT"]]
 ```
+
+__Note: the jitpack for `main-SNAPSHOT` seems not to be working at the moment, use the latest commit hash!__
 
 # [API Documentation](https://damn.github.io/gdl/)
 

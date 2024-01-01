@@ -1,15 +1,13 @@
 (ns ^:no-doc gdl.backends.libgdx.context.shape-drawer
   (:require gdl.context
             [gdl.graphics.color :as color])
-  (:import (com.badlogic.gdx.graphics Color Texture Pixmap Pixmap$Format)
+  (:import com.badlogic.gdx.math.MathUtils
+           (com.badlogic.gdx.graphics Color Texture Pixmap Pixmap$Format)
            com.badlogic.gdx.graphics.g2d.TextureRegion
            space.earlygrey.shapedrawer.ShapeDrawer))
 
 (defn- degree->radians [degree]
-  ; fn for this in libgdx?
-  ; degreesToRadians
-  ; multiply by this to convert from degrees to radians
-  (* degree (/ (Math/PI) 180)))
+  (* degree MathUtils/degreesToRadians))
 
 (defn- ->Color
   ([r g b]
@@ -45,11 +43,11 @@
 
   (draw-arc [{:keys [^ShapeDrawer shape-drawer]} [centre-x centre-y] radius start-angle degree color]
     (set-color shape-drawer color)
-    (.arc shape-drawer centre-x centre-y radius start-angle (degree->radians degree)))
+    (.arc shape-drawer centre-x centre-y radius (degree->radians start-angle) (degree->radians degree)))
 
   (draw-sector [{:keys [^ShapeDrawer shape-drawer]} [centre-x centre-y] radius start-angle degree color]
     (set-color shape-drawer color)
-    (.sector shape-drawer centre-x centre-y radius start-angle (degree->radians degree)))
+    (.sector shape-drawer centre-x centre-y radius (degree->radians start-angle) (degree->radians degree)))
 
   (draw-rectangle [{:keys [^ShapeDrawer shape-drawer]} x y w h color]
     (set-color shape-drawer color)

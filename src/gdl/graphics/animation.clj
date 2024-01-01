@@ -19,9 +19,8 @@
   (stopped? [_]
     (and (not looping?) (= cnt maxcnt)))
   (current-frame [this]
-    ; dec because otherwise (quot frame-duration frame-duration) = 1, so we get the next frame
-    ; which leads to java.lang.IndexOutOfBoundsException
-    (-> cnt dec (quot frame-duration) int frames)))
+    (frames (min (int (/ cnt frame-duration))
+                 (dec (count frames))))))
 
 (defn create
   [frames & {:keys [frame-duration looping?]}]

@@ -1,5 +1,5 @@
 (ns ^:no-doc gdl.backends.libgdx.context.image-drawer-creator
-  (:require gdl.context
+  (:require [gdl.context :refer [cached-texture]]
             [gdl.graphics.color :as color])
   (:import com.badlogic.gdx.graphics.Texture
            (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
@@ -75,19 +75,19 @@
                   tileh])
 ; color missing ?
 
-(defn- get-texture-region [assets file & [x y w h]]
-  (let [^Texture texture (get assets file)]
+(defn- ->texture-region [ctx file & [x y w h]]
+  (let [^Texture texture (cached-texture ctx file)]
     (if (and x y w h)
       (TextureRegion. texture (int x) (int y) (int w) (int h))
       (TextureRegion. texture))))
 
 (extend-type gdl.context.Context
   gdl.context/ImageCreator
-  (create-image [{:keys [assets world-unit-scale]} file]
+  (create-image [{:keys [world-unit-scale] :as ctx} file]
     (assoc-dimensions (map->Image {:file file
                                    :scale 1 ; not used anymore as arg (or scale 1) because varargs protocol methods not possible, anyway refactor images
                                    ; take only texture-region, scale,color
-                                   :texture (get-texture-region assets file)})
+                                   :texture (->texture-region ctx file)})
                       world-unit-scale))
 
   (get-scaled-copy [{:keys [world-unit-scale]} image scale]
@@ -95,11 +95,11 @@
                       world-unit-scale))
 
 
-  (get-sub-image [{:keys [assets world-unit-scale]}
+  (get-sub-image [{:keys [world-unit-scale] :as ctx}
                   {:keys [file sub-image-bounds] :as image}]
     (assoc-dimensions (assoc image
                              :scale 1
-                             :texture (apply get-texture-region assets file sub-image-bounds)
+                             :texture (apply ->texture-region ctx file sub-image-bounds)
                              :sub-image-bounds sub-image-bounds)
                       world-unit-scale))
 

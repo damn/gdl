@@ -39,7 +39,7 @@
            y (range (int bottom-y) (+ 2 (int top-y)))]
       [x y])))
 
-; could do onl with left-bottom and top-right points
+; could do only with left-bottom and top-right points
 (defn calculate-zoom
   "Calculates the zoom value for camera to see all the 4 points."
   [^OrthographicCamera camera & {:keys [left top right bottom]}]

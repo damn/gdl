@@ -95,7 +95,6 @@
   (->text-button [_ text on-clicked])
   (->check-box [_ text on-clicked checked?])
   (->image-button [_ image on-clicked])
-  (->text-tooltip [_ textfn])
   (->table [_ opts] ":rows like gdl.scene2d.ui.table/add-rows.
 Extra opts: :modal?
 
@@ -142,3 +141,8 @@ The preferred and minimum sizes are that of the children laid out in columns and
                     Can be used for lights & shadows.
                     The map-renderers are created and cached internally.
                     Renders only visible layers."))
+
+(defprotocol Assets
+  (cached-texture [_ file])
+  (all-sound-files   [_])
+  (all-texture-files [_]))
