@@ -14,12 +14,9 @@
                  returns the context with current-screen set to new-screen."))
 
 (defprotocol Graphics
-  (delta-time [_]
-              "the time span between the current frame and the last frame in seconds.")
-  (frames-per-second [_]
-                     "the average number of frames per second")
-  (->cursor [_ file hotspot-x hotspot-y]
-            "Takes care of disposing the cursor at application exit.")
+  (delta-time [_] "the time span between the current frame and the last frame in seconds.")
+  (frames-per-second [_] "the average number of frames per second")
+  (->cursor [_ file hotspot-x hotspot-y] "Needs to be disposed.")
   (set-cursor! [_ cursor])
   (->color [_ r g b a]))
 
@@ -32,31 +29,6 @@
 (defprotocol TrueTypeFontGenerator
   (generate-ttf [_ {:keys [file size]}]))
 
-(defprotocol TextDrawer
-  (draw-text [_ {:keys [x y text font h-align up? scale]}]
-             "font, h-align, up? and scale are optional.
-             h-align one of: :center, :left, :right. Default :center.
-             up? renders the font over y, otherwise under.
-             scale will multiply the drawn text size with the scale."))
-
-(defprotocol ShapeDrawer
-  (draw-ellipse [_ position radius-x radius-y color])
-  (draw-filled-ellipse [_ position radius-x radius-y color])
-  (draw-circle [_ position radius color])
-  (draw-filled-circle [_ position radius color])
-  (draw-arc [_ center-position radius start-angle degree color])
-  (draw-sector [_ center-position radius start-angle degree color])
-  (draw-rectangle [_ x y w h color])
-  (draw-filled-rectangle [_ x y w h color])
-  (draw-line [_ start-position end-position color])
-  (draw-grid [drawer leftx bottomy gridw gridh cellw cellh color])
-  (with-shape-line-width [_ width draw-fn]))
-
-(defprotocol ImageDrawer
-  (draw-image [_ image position])
-  (draw-centered-image [_ image position])
-  (draw-rotated-centered-image [_ image rotation position]))
-
 (defprotocol ImageCreator
   (create-image [_ file])
   (get-scaled-copy [_ image scale]
@@ -65,13 +37,6 @@
                  "Coordinates are from original image, not scaled one.")
   (spritesheet [_ file tilew tileh])
   (get-sprite [_ {:keys [tilew tileh] :as sheet} [x y]]))
-
-(defprotocol GuiWorldViews
-  (render-gui-view   [_ render-fn])
-  (render-world-view [_ render-fn])
-  (pixels->world-units [_ pixels])
-  (gui-mouse-position [_])
-  (world-mouse-position [_]))
 
 (defprotocol SoundStore
   (play-sound! [_ file]
@@ -83,64 +48,34 @@
                   The stage will get disposed also.
                   Sub-screen is optional.")
   (get-stage [_] "Stage implements clojure.lang.ILookup (get) on actor id.")
-  (mouse-on-stage-actor? [_]))
+  (mouse-on-stage-actor? [_])
+  (add-to-stage! [_ actor]))
 
-; TODO
-; actor-opts
-; table-opts
-; widget-group-opts
 (defprotocol Widgets
   (->actor [_ {:keys [draw act]}])
-  (->group [_] "Implements clojure.lang.ILookup (get) on actor id.")
+  (->group [_ {:keys [actors] :as opts}])
   (->text-button [_ text on-clicked])
-  (->check-box [_ text on-clicked checked?])
-  (->image-button [_ image on-clicked])
-  (->table [_ opts] ":rows like gdl.scene2d.ui.table/add-rows.
-Extra opts: :modal?
-
-Implements clojure.lang.ILookup (get) on actor id.
-
-https://javadoc.io/static/com.badlogicgames.gdx/gdx/1.12.1/com/badlogic/gdx/scenes/scene2d/ui/Table.html
-A group that sizes and positions children using table constraints.
-
-Children added with add(Actor...) (and similar methods returning a Cell) are laid out in rows and columns. Other children may be added with Group.addActor(Actor) (and similar methods) but are not laid out automatically and don't affect the preferred or minimum sizes.
-
-By default, Actor.getTouchable() is Touchable.childrenOnly.
-
-The preferred and minimum sizes are that of the children laid out in columns and rows.")
+  (->check-box [_ text on-clicked checked?] "on-clicked is a fn of one arg, taking the current isChecked state")
+  (->select-box [_ {:keys [items selected]}])
+  (->image-button [_ image on-clicked]
+                  [_ image on-clicked {:keys [dimensions]}])
+  (->table [_ opts])
   (->window [_ {:keys [title modal? close-button? center?] :as opts}])
   (->label [_ text])
   (->text-field [_ text opts])
   (->split-pane [_ {:keys [first-widget
                            second-widget
                            vertical?] :as opts}])
-  (->stack [_ actors]"A stack is a container that sizes its children to its size and positions them at 0,0 on top of each other.
-
-The preferred and min size of the stack is the largest preferred and min size of any children. The max size of the stack is the smallest max size of any children.
-
-Implements clojure.lang.ILookup (get) on actor id.
-
-https://javadoc.io/static/com.badlogicgames.gdx/gdx/1.12.1/com/badlogic/gdx/scenes/scene2d/ui/Table.html
-A group that sizes and positions children using table constraints.
-
-Children added with add(Actor...) (and similar methods returning a Cell) are laid out in rows and columns. Other children may be added with Group.addActor(Actor) (and similar methods) but are not laid out automatically and don't affect the preferred or minimum sizes.
-
-By default, Actor.getTouchable() is Touchable.childrenOnly.
-
-The preferred and minimum sizes are that of the children laid out in columns and rows. ")
+  (->stack [_ actors])
   (->image-widget [_ object opts] "Takes either an image or drawable. Opts are :scaling, :align and actor opts.")
   (->texture-region-drawable [_ texture-region])
-  (->horizontal-group [_] "Implements clojure.lang.ILookup (get) on actor id.")
-  (->button-group [_ {:keys [max-check-count min-check-count]}]))
+  (->horizontal-group [_ {:keys [space pad]}])
+  (->vertical-group [_ actors])
+  (->button-group [_ {:keys [max-check-count min-check-count]}])
+  (->scroll-pane [_ actor]))
 
 (defprotocol TiledMapLoader
-  (->tiled-map [_ file] "Needs to be disposed.")
-  (render-tiled-map [_ tiled-map color-setter]
-                    "Renders tiled-map using world-view at world-camera position and with world-unit-scale.
-                    Color-setter is a gdl.ColorSetter which is called for every tile-corner to set the color.
-                    Can be used for lights & shadows.
-                    The map-renderers are created and cached internally.
-                    Renders only visible layers."))
+  (->tiled-map [_ file] "Needs to be disposed."))
 
 (defprotocol Assets
   (cached-texture [_ file])

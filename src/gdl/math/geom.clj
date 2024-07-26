@@ -44,8 +44,9 @@
 
 (defn circle->outer-rectangle [{[x y] :position :keys [radius] :as circle}]
   {:pre [(circle? circle)]}
-  (let [size (* radius 2)]
-    {:left-bottom [(- x radius)
-                   (- y radius)]
+  (let [radius (float radius)
+        size (* radius 2)]
+    {:left-bottom [(- (float x) radius)
+                   (- (float y) radius)]
      :width  size
      :height size}))

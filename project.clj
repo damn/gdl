@@ -21,7 +21,9 @@
   :plugins [[lein-codox "0.10.8"]
             [lein-hiera "2.0.0"]]
   :codox {:source-uri "https://github.com/damn/gdl/blob/main/{filepath}#L{line}"}
-  :global-vars {*warn-on-reflection* true}
+  :global-vars {*warn-on-reflection* true
+                ;*unchecked-math* :warn-on-boxed
+                }
   :aliases {"dev" ["run" "-m" "gdl.backends.libgdx.dev" "gdl.simple-test" "app"]})
 
 ;; TODO dev

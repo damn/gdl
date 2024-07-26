@@ -2,59 +2,58 @@
   (:require [gdl.app :refer [current-context]]
             gdl.context
             gdl.disposable
-            [gdl.scene2d.actor :as actor]
-            gdl.scene2d.group
+            [gdl.scene2d.actor :as actor :refer [parent]]
+            [gdl.scene2d.group :refer [add-actor!]]
             gdl.scene2d.ui.button
             gdl.scene2d.ui.button-group
-            [gdl.scene2d.ui.label :refer [set-text!]]
-            [gdl.scene2d.ui.table :refer [add-rows]]
+            gdl.scene2d.ui.label
+            [gdl.scene2d.ui.table :refer [add-rows!]]
             gdl.scene2d.ui.cell
             gdl.scene2d.ui.text-field
-            gdl.scene2d.ui.widget-group
-            gdl.scene2d.ui.window
-            gdl.backends.libgdx.context.image-drawer-creator)
+            [gdl.scene2d.ui.widget-group :refer [pack!]]
+            gdl.scene2d.ui.window)
   (:import com.badlogic.gdx.graphics.g2d.TextureRegion
            (com.badlogic.gdx.utils Align Scaling)
            (com.badlogic.gdx.scenes.scene2d Actor Group Touchable)
-           (com.badlogic.gdx.scenes.scene2d.ui Image Button Label Table Cell WidgetGroup Stack ButtonGroup HorizontalGroup Window)
+           (com.badlogic.gdx.scenes.scene2d.ui Image Button Label Table Cell WidgetGroup Stack ButtonGroup HorizontalGroup VerticalGroup Window)
            (com.badlogic.gdx.scenes.scene2d.utils ChangeListener TextureRegionDrawable Drawable)
            (com.kotcrab.vis.ui VisUI VisUI$SkinScale)
-           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisImage VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane Tooltip)))
+           (com.kotcrab.vis.ui.widget VisTextButton VisCheckBox VisSelectBox VisImage VisImageButton VisTextField VisWindow VisTable VisLabel VisSplitPane Tooltip VisScrollPane)))
 
-(defn ->context []
+(defn- check-cleanup-visui! []
   ; app crashes during startup before VisUI/dispose and we do clojure.tools.namespace.refresh-> gui elements not showing.
   ; => actually there is a deeper issue at play
   ; we need to dispose ALL resources which were loaded already ...
   (when (VisUI/isLoaded)
-    (VisUI/dispose))
-  (VisUI/load #_VisUI$SkinScale/X2) ; TODO skin-scale arg
-  ; X2 everything too big .. need to change viewports for macbook ..
-  {:context/vis-ui (reify gdl.disposable/Disposable
-                     (dispose [_]
-                       (VisUI/dispose)))})
+    (VisUI/dispose)))
 
-(comment
- ; TODO set custom font with default skin - or set custom skin param
- ; https://stackoverflow.com/questions/45523878/libgdx-skin-not-updating-when-changing-font-programmatically
- (let [empty-skin (Skin.)]
-   (.add skin "font" my-font)
-   ; skin.addRegion(new TextureAtlas(Gdx.files.internal("mySkin.atlas")));
-   ; skin.load(Gdx.files.internal("mySkin.json"));
-   ; TODO will this overload 'default-font' ?
-   ; => I need to pass my custom skin to gdl.ui !
-   ; then, in your JSON file you can reference “font”
-   ;
-   ; {
-   ;   font: font
-   ; }
-   ))
+(defn- font-enable-markup! []
+  (-> (VisUI/getSkin)
+      (.getFont "default-font")
+      .getData
+      .markupEnabled
+      (set! true)))
 
-; this could do (swap! current-context on-clicked)
-; & enter/hide pure & render returning a context also...
+(defn- set-tooltip-config! []
+  (set! Tooltip/DEFAULT_APPEAR_DELAY_TIME (float 0))
+  ;(set! Tooltip/DEFAULT_FADE_TIME (float 0.3))
+  ;Controls whether to fade out tooltip when mouse was moved. (default false)
+  ;(set! Tooltip/MOUSE_MOVED_FADEOUT true)
+  )
+
+(defn ->context []
+  (check-cleanup-visui!)
+  (VisUI/load)
+  (font-enable-markup!)
+  (set-tooltip-config!)
+  {::disposable (reify gdl.disposable/Disposable
+                  (dispose [_]
+                    (VisUI/dispose)))})
+
 (defn- ->change-listener [_ on-clicked]
   (proxy [ChangeListener] []
     (changed [event actor]
-      (on-clicked @current-context))))
+      (on-clicked (assoc @current-context :actor actor)))))
 
 ; candidate for opts: :tooltip
 (defn- set-actor-opts [actor {:keys [id name visible? touchable center-position position] :as opts}]
@@ -84,7 +83,11 @@
       :colspan    (.colspan   cell (int arg))
       :pad        (.pad       cell (float arg))
       :pad-top    (.padTop    cell (float arg))
-      :pad-bottom (.padBottom cell (float arg)))))
+      :pad-bottom (.padBottom cell (float arg))
+      :width      (.width     cell (float arg))
+      :height     (.height    cell (float arg))
+      :right?     (.right     cell)
+      :left?      (.left      cell))))
 
 (comment
  ; fill parent & pack is from Widget TODO
@@ -96,12 +99,12 @@
 (defn- set-widget-group-opts [^WidgetGroup widget-group {:keys [fill-parent? pack?]}]
   (.setFillParent widget-group (boolean fill-parent?)) ; <- actor? TODO
   (when pack?
-    (.pack widget-group))
+    (pack! widget-group))
   widget-group)
 
 (defn- set-table-opts [^Table table {:keys [rows cell-defaults]}]
   (set-cell-opts (.defaults table) cell-defaults)
-  (add-rows table rows))
+  (add-rows! table rows))
 
 (defn- set-opts [actor opts]
   (set-actor-opts actor opts)
@@ -143,21 +146,36 @@
         (when act
           (act @current-context)))))
 
-  (->group [_]
-    (proxy [Group clojure.lang.ILookup] []
-      (valAt
-        ([id]
-         (find-actor-with-id this id))
-        ([id not-found]
-         (or (find-actor-with-id this id) not-found)))))
+  (->group [_ {:keys [actors] :as opts}]
+    (let [group (proxy [Group clojure.lang.ILookup] []
+                  (valAt
+                    ([id]
+                     (find-actor-with-id this id))
+                    ([id not-found]
+                     (or (find-actor-with-id this id) not-found))))]
+      (run! #(add-actor! group %) actors)
+      (set-opts group opts)))
 
-  (->horizontal-group [_]
-    (proxy [HorizontalGroup clojure.lang.ILookup] []
-      (valAt
-        ([id]
-         (find-actor-with-id this id))
-        ([id not-found]
-         (or (find-actor-with-id this id) not-found)))))
+  (->horizontal-group [_ {:keys [space pad]}]
+    (let [group (proxy [HorizontalGroup clojure.lang.ILookup] []
+                  (valAt
+                    ([id]
+                     (find-actor-with-id this id))
+                    ([id not-found]
+                     (or (find-actor-with-id this id) not-found))))]
+      (when space (.space group (float space)))
+      (when pad   (.pad   group (float pad)))
+      group))
+
+  (->vertical-group [_ actors]
+    (let [group (proxy [VerticalGroup clojure.lang.ILookup] []
+                  (valAt
+                    ([id]
+                     (find-actor-with-id this id))
+                    ([id not-found]
+                     (or (find-actor-with-id this id) not-found))))]
+      (run! #(add-actor! group %) actors)
+      group))
 
   (->button-group [_ {:keys [max-check-count min-check-count]}]
     (let [button-group (ButtonGroup.)]
@@ -165,13 +183,11 @@
       (.setMinCheckCount button-group min-check-count)
       button-group))
 
-  ; ^TextButton
   (->text-button [context text on-clicked]
     (let [button (VisTextButton. ^String text)]
       (.addListener button (->change-listener context on-clicked))
       button))
 
-  ; ^CheckBox
   (->check-box [context text on-clicked checked?]
     (let [^Button button (VisCheckBox. ^String text)]
       (.setChecked button checked?)
@@ -181,15 +197,23 @@
                         (on-clicked (.isChecked actor)))))
       button))
 
+  (->select-box [_ {:keys [items selected]}]
+    (doto (VisSelectBox.)
+      (.setItems (into-array items))
+      (.setSelected selected)))
+
   ; TODO give directly texture-region
   ; TODO check how to make toggle-able ? with hotkeys for actionbar trigger ?
-  ; ^VisImageButton
-  (->image-button [context image on-clicked]
-    (let [drawable (TextureRegionDrawable. ^TextureRegion (:texture image))
-          button (VisImageButton. drawable)]
-      ;(.setMinSize drawable (float 96) (float 96))
-      (.addListener button (->change-listener context on-clicked))
-      button))
+  (->image-button
+    ([context image on-clicked]
+     (gdl.context/->image-button context image on-clicked {}))
+    ([context image on-clicked {:keys [dimensions]}]
+     (let [drawable (TextureRegionDrawable. ^TextureRegion (:texture image))
+           button (VisImageButton. drawable)]
+       (when-let [[w h] dimensions]
+         (.setMinSize drawable (float w) (float h)))
+       (.addListener button (->change-listener context on-clicked))
+       button)))
 
   (->table ^Table [_ opts]
     (-> (proxy [VisTable clojure.lang.ILookup] []
@@ -200,7 +224,7 @@
              (or (find-actor-with-id this id) not-found))))
         (set-opts opts)))
 
-  (->window ^Window [_ {:keys [title modal? close-button? center? close-on-escape?] :as opts}]
+  (->window [_ {:keys [title modal? close-button? center? close-on-escape?] :as opts}]
     (-> (let [window (doto (proxy [VisWindow clojure.lang.ILookup] [^String title true] ; true = showWindowBorder
                              (valAt
                                ([id]
@@ -217,14 +241,14 @@
   (->label [_ text]
     (VisLabel. ^CharSequence text))
 
-  (->text-field ^VisTextField [_ ^String text opts]
+  (->text-field [_ ^String text opts]
     (-> (VisTextField. text)
         (set-opts opts)))
 
   ; TODO is not decendend of SplitPane anymore => check all type hints here
-  (->split-pane ^VisSplitPane [_ {:keys [^Actor first-widget
-                                         ^Actor second-widget
-                                         ^Boolean vertical?] :as opts}]
+  (->split-pane [_ {:keys [^Actor first-widget
+                           ^Actor second-widget
+                           ^Boolean vertical?] :as opts}]
     (-> (VisSplitPane. first-widget second-widget vertical?)
         (set-actor-opts opts)))
 
@@ -246,8 +270,14 @@
         (set-opts opts)))
 
   ; => maybe with VisImage not necessary anymore?
-  (->texture-region-drawable ^TextureRegionDrawable [_ ^TextureRegion texture]
-    (TextureRegionDrawable. texture)))
+  (->texture-region-drawable [_ ^TextureRegion texture]
+    (TextureRegionDrawable. texture))
+
+  (->scroll-pane [_ actor]
+    (let [scroll-pane (VisScrollPane. actor)]
+      (.setFlickScroll scroll-pane false)
+      (.setFadeScrollBars scroll-pane false)
+      scroll-pane)))
 
 (extend-type Cell
   gdl.scene2d.ui.cell/Cell
@@ -259,7 +289,7 @@
   (cells [table]
     (.getCells table))
 
-  (add-rows [table rows]
+  (add-rows! [table rows]
     (doseq [row rows]
       (doseq [props-or-actor row]
         (if (map? props-or-actor)
@@ -270,10 +300,7 @@
     table)
 
   (add! [table actor]
-    (.add table ^Actor actor))
-
-  (add-separator! [table]
-    (.addSeparator ^VisTable table)))
+    (.add table ^Actor actor)))
 
 (extend-type Label
   gdl.scene2d.ui.label/Label
@@ -331,20 +358,37 @@
     (.remove actor))
   (parent [actor]
     (.getParent actor))
+
   (add-tooltip! [actor tooltip-text]
-    (let [label (VisLabel. "")
+    (let [text? (string? tooltip-text)
+          label (VisLabel. (if text? tooltip-text ""))
           tooltip (proxy [Tooltip] []
-                    (draw [batch parent-alpha] ; can not use fadeIn, it is private not getting called.
-                      (let [^Tooltip this this
-                            text (tooltip-text @current-context)]
-                        (when-not (= (str (.getText ^VisLabel (.getContent this))) text)
-                          (set-text! this ^String text))
-                        (proxy-super draw batch parent-alpha))))]
+                    ; hooking into getWidth because at
+                    ; https://github.com/kotcrab/vis-ui/blob/master/ui/src/main/java/com/kotcrab/vis/ui/widget/Tooltip.java#L271
+                    ; when tooltip position gets calculated we setText (which calls pack) before that
+                    ; so that the size is correct for the newly calculated text.
+                    (getWidth []
+                      (let [^Tooltip this this]
+                        (when-not text?
+                          (when-let [ctx @current-context]  ; initial tooltip creation when app context is getting built.
+                            (.setText this (str (tooltip-text ctx)))))
+                        (proxy-super getWidth))))]
       (.setAlignment label Align/center)
       (.setTarget  tooltip ^Actor actor)
       (.setContent tooltip ^Actor label)))
+
   (remove-tooltip! [actor]
-    (Tooltip/removeTooltip actor)))
+    (Tooltip/removeTooltip actor))
+
+  (find-ancestor-window [actor]
+    (if-let [p (parent actor)]
+      (if (instance? Window p)
+        p
+        (actor/find-ancestor-window p))
+      (throw (Error. (str "Actor has no parent window " actor)))))
+
+  (pack-ancestor-window! [actor]
+    (pack! (actor/find-ancestor-window actor))))
 
 (extend-type ButtonGroup
   gdl.scene2d.ui.button-group/ButtonGroup
@@ -369,14 +413,14 @@
   gdl.scene2d.ui.button/Actor
   (button? [actor]
     (or (button-class? actor)
-        (and (actor/parent actor)
-             (button-class? (actor/parent actor))))))
+        (and (parent actor)
+             (button-class? (parent actor))))))
 
 (extend-type Actor
   gdl.scene2d.ui.window/Actor
   (window-title-bar? [actor]
     (when (instance? Label actor)
-      (when-let [prnt (actor/parent actor)]
-        (when-let [prnt (actor/parent prnt)]
+      (when-let [prnt (parent actor)]
+        (when-let [prnt (parent prnt)]
           (and (instance? VisWindow prnt)
                (= (.getTitleLabel ^Window prnt) actor)))))))

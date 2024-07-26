@@ -24,12 +24,12 @@
   (MathUtils/isEqual 1 (length v)))
 
 (defn get-normal-vectors [[x y]]
-  [[(- y)   x]
-   [y    (- x)]])
+  [[(- (float y))         x]
+   [          y (- (float x))]])
 
 (defn direction [[sx sy] [tx ty]]
-  (normalise [(- tx sx)
-              (- ty sy)]))
+  (normalise [(- (float tx) (float sx))
+              (- (float ty) (float sy))]))
 
 (defn get-angle-from-vector
   "converts theta of Vector2 to angle from top (top is 0 degree, moving left is 90 degree etc.), ->counterclockwise"

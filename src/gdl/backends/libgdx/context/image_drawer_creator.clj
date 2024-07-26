@@ -1,49 +1,7 @@
 (ns ^:no-doc gdl.backends.libgdx.context.image-drawer-creator
-  (:require [gdl.context :refer [cached-texture]]
-            [gdl.graphics.color :as color])
+  (:require [gdl.context :refer [cached-texture]])
   (:import com.badlogic.gdx.graphics.Texture
-           (com.badlogic.gdx.graphics.g2d Batch TextureRegion)))
-
-(defn- draw-texture [^Batch batch texture [x y] [w h] rotation color]
-  (if color (.setColor batch color))
-  (.draw batch texture ; TODO this is texture-region ?
-         x
-         y
-         (/ w 2) ; rotation origin
-         (/ h 2)
-         w ; width height
-         h
-         1 ; scaling factor
-         1
-         rotation)
-  (if color (.setColor batch color/white)))
-
-; TODO just make in image map of unit-scales to dimensions for each view
-; and get by view key ?
-(defn- unit-dimensions [unit-scale image]
-  (if (= unit-scale 1)
-    (:pixel-dimensions image)
-    (:world-unit-dimensions image)))
-
-(extend-type gdl.context.Context
-  gdl.context/ImageDrawer
-  (draw-image [{:keys [batch unit-scale]}
-               {:keys [texture color] :as image}
-               position]
-    (draw-texture batch texture position (unit-dimensions unit-scale image) 0 color))
-
-  (draw-rotated-centered-image [{:keys [batch unit-scale]} {:keys [texture color] :as image} rotation [x y]]
-    (let [[w h] (unit-dimensions unit-scale image)]
-      (draw-texture batch
-                    texture
-                    [(- x (/ w 2))
-                     (- y (/ h 2))]
-                    [w h]
-                    rotation
-                    color)))
-
-  (draw-centered-image [this image position]
-    (gdl.context/draw-rotated-centered-image this image 0 position)))
+           com.badlogic.gdx.graphics.g2d.TextureRegion))
 
 (defn- texture-dimensions [^TextureRegion texture]
   [(.getRegionWidth  texture)
@@ -56,11 +14,11 @@
                   (number? (scale 0))
                   (number? (scale 1))))]}
   (let [pixel-dimensions (if (number? scale)
-                           (mapv (partial * scale) (texture-dimensions texture))
+                           (mapv (comp float (partial * scale)) (texture-dimensions texture))
                            scale)]
     (assoc image
            :pixel-dimensions pixel-dimensions
-           :world-unit-dimensions (mapv (partial * world-unit-scale) pixel-dimensions))))
+           :world-unit-dimensions (mapv (comp float (partial * world-unit-scale)) pixel-dimensions))))
 
 ; (.getTextureData (.getTexture (:texture (first (:frames (:animation @(game.db/get-entity 1)))))))
 ; can remove :file @ Image because its in texture-data
@@ -81,21 +39,23 @@
       (TextureRegion. texture (int x) (int y) (int w) (int h))
       (TextureRegion. texture))))
 
+; TODO pass texture-region ....
+
 (extend-type gdl.context.Context
   gdl.context/ImageCreator
-  (create-image [{:keys [world-unit-scale] :as ctx} file]
+  (create-image [{{:keys [world-unit-scale]} :context/graphics :as ctx} file]
     (assoc-dimensions (map->Image {:file file
                                    :scale 1 ; not used anymore as arg (or scale 1) because varargs protocol methods not possible, anyway refactor images
                                    ; take only texture-region, scale,color
                                    :texture (->texture-region ctx file)})
                       world-unit-scale))
 
-  (get-scaled-copy [{:keys [world-unit-scale]} image scale]
+  (get-scaled-copy [{{:keys [world-unit-scale]} :context/graphics} image scale]
     (assoc-dimensions (assoc image :scale scale)
                       world-unit-scale))
 
 
-  (get-sub-image [{:keys [world-unit-scale] :as ctx}
+  (get-sub-image [{{:keys [world-unit-scale]} :context/graphics :as ctx}
                   {:keys [file sub-image-bounds] :as image}]
     (assoc-dimensions (assoc image
                              :scale 1

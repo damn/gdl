@@ -5,14 +5,10 @@
             [gdl.context :refer [current-screen change-screen]]
             [gdl.graphics.color :as color]
             (gdl.backends.libgdx.context [assets :as assets]
-                                         graphics
-                                         [gui-world-views :as views]
-                                         image-drawer-creator
+                                         [graphics :as graphics]
                                          input
-                                         [shape-drawer :as shape-drawer]
-                                         [sprite-batch :as sprite-batch]
+                                         image-drawer-creator
                                          stage
-                                         [text-drawer :as text-drawer]
                                          tiled
                                          ttf-generator
                                          [vis-ui :as vis-ui]))
@@ -26,15 +22,10 @@
     (.exit Gdx/app)))
 
 (defn- ->default-context [world-unit-scale]
-  (let [context (sprite-batch/->context)]
-    (-> context
-        (merge (shape-drawer/->context context) ; requires batch
-               (assets/->context)
-               (views/->context (or world-unit-scale 1))
-               (text-drawer/->context)
-               (vis-ui/->context)
-               {:context/disposables (atom #{})})
-        gdl.context/map->Context)))
+  (gdl.context/map->Context
+   (merge {:context/graphics (graphics/->context world-unit-scale)}
+          (assets/->context)
+          (vis-ui/->context))))
 
 (extend-type com.badlogic.gdx.utils.Disposable
   gdl.disposable/Disposable
@@ -43,13 +34,11 @@
 
 (defn- dispose-all [context]
   (doseq [[k value] context
-          :when (some #(extends? gdl.disposable/Disposable %)
-                      (supers (class value)))]
+          :when (or (extends? gdl.disposable/Disposable (class value))
+                    (some #(extends? gdl.disposable/Disposable %)
+                          (supers (class value))))]
     ;(println "Disposing " k)
-    (dispose value))
-  (doseq [object @(:context/disposables context)]
-    ;(println "Disposing " object)
-    (dispose object)))
+    (dispose value)))
 
 (extend-type gdl.context.Context
   gdl.context/ApplicationScreens
@@ -81,11 +70,11 @@
     (render []
       (ScreenUtils/clear color/black)
       (let [context @current-context]
-        (views/fix-viewport-update context)
+        (graphics/fix-viewport-update context)
         (screen/render (current-screen context) context)))
 
     (resize [w h]
-      (views/update-viewports @current-context w h))))
+      (graphics/update-viewports @current-context w h))))
 
 (defn- lwjgl3-configuration [{:keys [title width height full-screen? fps]}]
   {:pre [title
