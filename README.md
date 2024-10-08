@@ -1,3 +1,5 @@
+# Archived: Development continues in https://github.com/damn/Fullmoon
+
 <p align="center">
   <img src="https://github.com/damn/gdx/blob/main/logo.png" width="250" height="105"/>
 </p>
