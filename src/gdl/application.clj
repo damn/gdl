@@ -10,38 +10,32 @@
                      Toolkit)
            (org.lwjgl.system Configuration)))
 
-(defprotocol Listener
-  (create! [_])
-  (dispose! [_])
-  (render! [_])
-  (resize! [_]))
-
-(defn- gdx-listener [listener]
-  (proxy [ApplicationAdapter] []
-    (create []
-      (create! listener))
-
-    (dispose []
-      (dispose! listener))
-
-    (render []
-      (render! listener))
-
-    (resize [_width _height]
-      (resize! listener))))
-
-(defn start! [listener
-              {:keys [title
+(defn start! [{:keys [title
                       window-width
                       window-height
                       fps
-                      dock-icon]}]
+                      dock-icon
+                      create!
+                      dispose!
+                      render!
+                      resize!]}]
   (when (= SharedLibraryLoader/os Os/MacOsX)
-    (.set Configuration/GLFW_LIBRARY_NAME "glfw_async")
-    (.setIconImage (Taskbar/getTaskbar)
+    (.set Configuration/GLFW_LIBRARY_NAME "glfw_async") ; GLFW/lwjgl is abstracted by libgdx lwjgl3 backend -> move there
+    (.setIconImage (Taskbar/getTaskbar) ; -> try also to move there?
                    (.getImage (Toolkit/getDefaultToolkit)
                               (io/resource dock-icon))))
-  (Lwjgl3Application. (gdx-listener listener)
+  (Lwjgl3Application. (proxy [ApplicationAdapter] []
+                        (create []
+                          (when create! (create!)))
+
+                        (dispose []
+                          (when dispose! (dispose!)))
+
+                        (render []
+                          (when render! (render!)))
+
+                        (resize [width height]
+                          (when resize! (resize! width height))))
                       (doto (Lwjgl3ApplicationConfiguration.)
                         (.setTitle title)
                         (.setWindowedMode window-width window-height)
