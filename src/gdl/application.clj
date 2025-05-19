@@ -42,4 +42,4 @@
                         (.setForegroundFPS fps))))
 
 (defmacro post-runnable! [& exprs]
-  (.postRunnable Gdx/app (fn [] ~@exprs)))
+  `(.postRunnable Gdx/app (fn [] ~@exprs)))
