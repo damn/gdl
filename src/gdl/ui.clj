@@ -87,6 +87,9 @@
     (.setPosition actor x y))
   actor)
 
+(defn- get-stage-ctx [^Actor actor]
+  @(.ctx ^CtxStage (.getStage actor)))
+
 (defn actor [opts]
   (doto (proxy [Actor] []
           (act [delta]
@@ -94,7 +97,7 @@
               (f this delta)))
           (draw [_batch _parent-alpha]
             (when-let [f (:draw opts)]
-              (f this))))
+              (f this (get-stage-ctx this)))))
     (set-actor-opts! opts)))
 
 (defn find-actor [^Group group name]
