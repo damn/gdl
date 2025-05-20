@@ -11,8 +11,8 @@
                                       PopupMenu)))
 
 (defn- set-label-text-actor [label text-fn]
-  (ui/actor {:act (fn [_this _delta _ctx]
-                    (Label/.setText label (str (text-fn))))}))
+  (ui/actor {:act (fn [_this _delta ctx]
+                    (Label/.setText label (str (text-fn ctx))))}))
 
 (defn- add-upd-label!
   ([table text-fn icon]
@@ -29,7 +29,7 @@
 (defn- add-update-labels! [menu-bar update-labels]
   (let [table (MenuBar/.getTable menu-bar)]
     (doseq [{:keys [label update-fn icon]} update-labels]
-      (let [update-fn #(str label ": " (update-fn))]
+      (let [update-fn #(str label ": " (update-fn %))]
         (if icon
           (add-upd-label! table update-fn icon)
           (add-upd-label! table update-fn))))))
