@@ -348,7 +348,7 @@
     (.setFlickScroll false)
     (.setFadeScrollBars false)))
 
-(defn- change-listener ^ChangeListener [on-clicked]
+(defn change-listener ^ChangeListener [on-clicked]
   (proxy [ChangeListener] []
     (changed [event actor]
       (on-clicked actor))))
