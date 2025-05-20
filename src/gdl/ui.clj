@@ -94,7 +94,7 @@
   (doto (proxy [Actor] []
           (act [delta]
             (when-let [f (:act opts)]
-              (f this delta)))
+              (f this delta (get-stage-ctx this))))
           (draw [_batch _parent-alpha]
             (when-let [f (:draw opts)]
               (f this (get-stage-ctx this)))))

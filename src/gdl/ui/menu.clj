@@ -11,7 +11,7 @@
                                       PopupMenu)))
 
 (defn- set-label-text-actor [label text-fn]
-  (ui/actor {:act (fn [_this _delta]
+  (ui/actor {:act (fn [_this _delta _ctx]
                     (Label/.setText label (str (text-fn))))}))
 
 (defn- add-upd-label!
