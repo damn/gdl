@@ -20,6 +20,7 @@
                                                Window)
            (com.badlogic.gdx.scenes.scene2d.utils BaseDrawable
                                                   ChangeListener
+                                                  ClickListener
                                                   Drawable
                                                   TextureRegionDrawable)
            (com.badlogic.gdx.math Vector2)
@@ -453,3 +454,8 @@
 
 (defn remove-tooltip! [^Actor actor]
   (Tooltip/removeTooltip actor))
+
+(defn click-listener [f]
+  (proxy [ClickListener] []
+    (clicked [event _x _y]
+      (f @(.ctx ^CtxStage (.getStage event))))))
