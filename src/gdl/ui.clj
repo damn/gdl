@@ -37,7 +37,8 @@
                                       VisTable
                                       VisTextButton
                                       VisTextField
-                                      VisWindow)))
+                                      VisWindow)
+           (gdl.ui CtxStage)))
 
 (defn user-object [^Actor actor]
   (.getUserObject actor))
@@ -149,7 +150,7 @@
   (Stage/.getRoot stage))
 
 (defn stage [viewport batch actors]
-  (let [stage (proxy [Stage ILookup] [viewport batch]
+  (let [stage (proxy [CtxStage ILookup] [viewport batch (atom nil)]
                 (valAt [id]
                   (find-actor-with-id (root this) id)))]
     (run! (partial add! stage) actors)
