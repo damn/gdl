@@ -345,13 +345,10 @@
     (.setFlickScroll false)
     (.setFadeScrollBars false)))
 
-(declare ^:dynamic *on-clicked-actor*)
-
 (defn- change-listener ^ChangeListener [on-clicked]
   (proxy [ChangeListener] []
     (changed [event actor]
-      (binding [*on-clicked-actor* actor]
-        (on-clicked)))))
+      (on-clicked actor))))
 
 (defn text-button [text on-clicked]
   (doto (VisTextButton. (str text))
