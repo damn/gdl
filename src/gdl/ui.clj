@@ -360,7 +360,7 @@
 (defn change-listener ^ChangeListener [on-clicked]
   (proxy [ChangeListener] []
     (changed [event actor]
-      (on-clicked actor))))
+      (on-clicked actor @(.ctx ^CtxStage (.getStage event))))))
 
 (defn text-button [text on-clicked]
   (doto (VisTextButton. (str text))

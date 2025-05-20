@@ -39,7 +39,7 @@
     (doseq [{:keys [label on-click]} items]
       (PopupMenu/.addItem app-menu (doto (MenuItem. label)
                                      (.addListener (ui/change-listener
-                                                    (fn [_actor]
+                                                    (fn [_actor _ctx]
                                                       (if on-click (on-click))))))))
     (MenuBar/.addMenu menu-bar app-menu)))
 
