@@ -38,7 +38,9 @@
   (let [app-menu (Menu. label)]
     (doseq [{:keys [label on-click]} items]
       (PopupMenu/.addItem app-menu (doto (MenuItem. label)
-                                     (.addListener (ui/change-listener (or on-click (fn [])))))))
+                                     (.addListener (ui/change-listener
+                                                    (fn [_actor]
+                                                      (if on-click (on-click))))))))
     (MenuBar/.addMenu menu-bar app-menu)))
 
 (defn create [{:keys [menus update-labels]}]
