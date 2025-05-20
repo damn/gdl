@@ -15,6 +15,7 @@
                                                Stack
                                                Tree$Node
                                                VerticalGroup
+                                               Widget
                                                WidgetGroup
                                                Window)
            (com.badlogic.gdx.scenes.scene2d.utils BaseDrawable
@@ -99,6 +100,12 @@
             (when-let [f (:draw opts)]
               (f this (get-stage-ctx this)))))
     (set-actor-opts! opts)))
+
+(defn widget [opts]
+  (proxy [Widget] []
+    (draw [_batch _parent-alpha]
+      (when-let [f (:draw opts)]
+        (f this (get-stage-ctx this))))))
 
 (defn find-actor [^Group group name]
   (.findActor group name))
