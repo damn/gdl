@@ -89,7 +89,8 @@
   actor)
 
 (defn- get-stage-ctx [^Actor actor]
-  @(.ctx ^CtxStage (.getStage actor)))
+  (when-let [stage (.getStage actor)] ; for tooltip when actors are initialized w/o stage yet
+    @(.ctx ^CtxStage stage)))
 
 (defn actor [opts]
   (doto (proxy [Actor] []
@@ -440,7 +441,10 @@
                   (getWidth []
                     (let [^Tooltip this this]
                       (when-not text?
-                        (.setText this (str (tooltip-text))))
+                        (let [actor (.getTarget this)
+                              ctx (get-stage-ctx actor)]
+                          (when ctx ; ctx is only set later for update!/draw! ... not at starting of initialisation
+                            (.setText this (str (tooltip-text ctx))))))
                       (proxy-super getWidth))))]
     (.setAlignment label Align/center)
     (.setTarget  tooltip actor)
