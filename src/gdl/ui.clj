@@ -340,11 +340,10 @@
   (image-widget (:texture-region image) opts))
 
 (defn scroll-pane [actor]
-  (let [scroll-pane (VisScrollPane. actor)]
-    (set-user-object! scroll-pane :scroll-pane)
-    (.setFlickScroll scroll-pane false)
-    (.setFadeScrollBars scroll-pane false)
-    scroll-pane))
+  (doto (VisScrollPane. actor)
+    (set-user-object! :scroll-pane)
+    (.setFlickScroll false)
+    (.setFadeScrollBars false)))
 
 (declare ^:dynamic *on-clicked-actor*)
 
@@ -355,9 +354,8 @@
         (on-clicked)))))
 
 (defn text-button [text on-clicked]
-  (let [button (VisTextButton. (str text))]
-    (.addListener button (change-listener on-clicked))
-    button))
+  (doto (VisTextButton. (str text))
+    (.addListener (change-listener on-clicked))))
 
 (defn image-button
   ([image on-clicked]
